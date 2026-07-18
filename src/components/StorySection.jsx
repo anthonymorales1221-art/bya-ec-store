@@ -74,7 +74,7 @@ export default function StorySection() {
   const imgRef = useScaleReveal();
 
   return (
-    <section className="py-28 sm:py-36 px-6 bg-gradient-to-b from-cream to-cream-deep/40" style={{ perspective: '1600px' }}>
+    <section id="como-comprar" className="py-28 sm:py-36 px-6 bg-gradient-to-b from-cream to-cream-deep/40" style={{ perspective: '1600px' }}>
       <div className="max-w-[1180px] mx-auto grid lg:grid-cols-[0.9fr_1.1fr] gap-12 lg:gap-20 items-start">
 
         {/* Columna izquierda — sticky */}

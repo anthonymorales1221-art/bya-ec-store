@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+:root {
+  --ba-navy: #10243E;
+  --ba-navy-deep: #09182B;
+  --ba-copper: #A96954;
+  --ba-copper-soft: #D7B5A7;
+  --ba-ivory: #F7F3EC;
+  --ba-warm-white: #FFFDF9;
+  --ba-graphite: #25272B;
+  --ba-muted: #625F5C;
+  --ba-border: #E5DED5;
+}
+
 @theme {
   /* ===== Identidad de marca B&A.Ec Store ===== */
   --color-cream: #FAF6F1;
@@ -29,6 +41,53 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 84px;
+}
+
+#inicio,
+#categorias,
+#como-comprar,
+#opiniones {
+  scroll-margin-top: 84px;
+}
+
+.ba-hero {
+  background:
+    radial-gradient(circle at 82% 35%, rgba(180, 124, 104, 0.22), transparent 27%),
+    linear-gradient(115deg, #fffdf9 0%, #f7f3ec 48%, #dce3e9 74%, #10243e 125%);
+}
+
+.ba-hero-image {
+  object-position: 72% center;
+}
+
+.ba-hero-overlay {
+  background: linear-gradient(90deg, rgba(255,253,249,0.99) 0%, rgba(247,243,236,0.97) 36%, rgba(247,243,236,0.72) 55%, rgba(247,243,236,0.08) 82%);
+}
+
+.ba-hero-glow {
+  background: radial-gradient(circle at 12% 90%, rgba(215,181,167,0.22), transparent 32%);
+}
+
+.ba-hero-enter {
+  animation: ba-hero-enter 560ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.ba-hero-delay-1 { animation-delay: 80ms; }
+.ba-hero-delay-2 { animation-delay: 150ms; }
+.ba-hero-delay-3 { animation-delay: 220ms; }
+.ba-hero-delay-4 { animation-delay: 290ms; }
+
+@keyframes ba-hero-enter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 767px) {
+  .ba-hero-image { object-position: 68% center; }
+  .ba-hero-overlay {
+    background: linear-gradient(90deg, rgba(255,253,249,0.98) 0%, rgba(247,243,236,0.93) 58%, rgba(247,243,236,0.58) 100%);
+  }
+  .ba-hero-content { text-shadow: 0 1px 18px rgba(255, 253, 249, 0.35); }
 }
 
 body {

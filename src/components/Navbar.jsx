@@ -1,110 +1,120 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useCart } from '../hooks/useCart';
 import { BRAND } from '../data/config';
+import { useCart } from '../hooks/useCart';
 
-function BrandMark() {
+function BrandMark({ premium = false }) {
   return (
-    <span className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-peach to-dust shadow-sm">
-      <svg viewBox="0 0 48 48" className="w-6 h-6">
-        <path d="M14 18c2-4 8-4 9 1" stroke="#2B2B2E" strokeWidth="2" fill="none" strokeLinecap="round" />
-        <path d="M34 22c-2 5-9 5-9-1" stroke="#2B2B2E" strokeWidth="2" fill="none" strokeLinecap="round" />
-      </svg>
+    <span
+      className={`flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ${
+        premium ? 'ring-1 ring-[var(--ba-copper-soft)]/70' : 'ring-1 ring-line'
+      }`}
+    >
+      <img
+        src="/images/logo/ba-ec-logo.png"
+        alt="Logo de B&A.EC Store"
+        width="1024"
+        height="1024"
+        className="h-full w-full object-contain"
+      />
     </span>
   );
 }
 
-export default function Navbar() {
+function StoreNavbar({ scrolled }) {
   const { cartCount, openCart } = useCart();
-  const location = useLocation();
-  const isStore = location.pathname.startsWith('/tienda');
-  const [scrolled, setScrolled] = useState(false);
-  const headerRef = useRef(null);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
   return (
-    <header
-      ref={headerRef}
-      className={`sticky top-0 z-[200] transition-all duration-300 ${
-        scrolled
-          ? 'backdrop-blur-xl bg-cream/95 border-b border-line shadow-sm'
-          : 'backdrop-blur-md bg-cream/75 border-b border-transparent'
-      }`}
-    >
-      <div className="max-w-[1180px] mx-auto px-6 py-4 flex items-center justify-between gap-4">
-        <Link to="/" className="flex items-center gap-3 group">
+    <header className={`sticky top-0 z-[200] border-b transition-all duration-300 ${scrolled ? 'border-line bg-cream/95 shadow-sm backdrop-blur-xl' : 'border-transparent bg-cream/75 backdrop-blur-md'}`}>
+      <div className="mx-auto flex max-w-[1180px] items-center justify-between gap-4 px-6 py-4">
+        <Link to="/" className="group flex items-center gap-3">
           <BrandMark />
           <span className="leading-none">
-            <span className="block font-display font-semibold text-xl tracking-tight">{BRAND.name}</span>
-            <span className="block text-[0.62rem] uppercase tracking-[0.14em] text-ink-soft font-semibold">
-              {BRAND.tagline}
-            </span>
+            <span className="block font-display text-xl font-semibold tracking-tight">{BRAND.name}</span>
+            <span className="block text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-ink-soft">{BRAND.tagline}</span>
           </span>
         </Link>
-
-        <nav className="hidden md:flex items-center gap-1">
-          {[
-            { to: '/', label: 'Inicio', active: !isStore },
-            { to: '/tienda', label: 'Tienda', active: isStore },
-          ].map(({ to, label, active }) => (
-            <Link
-              key={to}
-              to={to}
-              className={`relative text-sm font-bold px-5 py-2.5 rounded-full transition-all ${
-                active
-                  ? 'text-ink bg-cream-deep'
-                  : 'text-ink-soft hover:text-ink hover:bg-cream-deep/70'
-              }`}
-            >
-              {label}
-              {active && (
-                <motion.span
-                  layoutId="nav-pill"
-                  className="absolute inset-0 rounded-full bg-cream-deep -z-10"
-                  transition={{ type: 'spring', stiffness: 380, damping: 35 }}
-                />
-              )}
-            </Link>
-          ))}
+        <nav aria-label="Navegación de tienda" className="hidden items-center gap-1 md:flex">
+          <Link to="/" className="rounded-full px-5 py-2.5 text-sm font-bold text-ink-soft transition-all hover:bg-cream-deep/70 hover:text-ink">Inicio</Link>
+          <Link to="/tienda" aria-current="page" className="rounded-full bg-cream-deep px-5 py-2.5 text-sm font-bold text-ink">Tienda</Link>
         </nav>
-
-        <motion.button
-          type="button"
-          onClick={openCart}
-          whileTap={{ scale: 0.94 }}
-          whileHover={{ scale: 1.02 }}
-          className="relative flex items-center gap-2.5 bg-ink text-cream rounded-full px-5 py-2.5 font-bold text-sm hover:bg-[#1c1c1e] transition-colors shadow-sm"
-        >
-          <svg viewBox="0 0 24 24" className="w-[17px] h-[17px]" fill="none">
-            <path
-              d="M3 6h2l2.2 11.2a1 1 0 0 0 1 .8h9.6a1 1 0 0 0 1-.8L21 8H6"
-              stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-            />
-            <circle cx="9" cy="21" r="1.4" fill="currentColor" />
-            <circle cx="17" cy="21" r="1.4" fill="currentColor" />
+        <motion.button type="button" onClick={openCart} whileTap={{ scale: 0.94 }} whileHover={{ scale: 1.02 }} className="relative flex items-center gap-2.5 rounded-full bg-ink px-5 py-2.5 text-sm font-bold text-cream shadow-sm transition-colors hover:bg-[#1c1c1e]">
+          <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill="none" aria-hidden="true">
+            <path d="M3 6h2l2.2 11.2a1 1 0 0 0 1 .8h9.6a1 1 0 0 0 1-.8L21 8H6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="9" cy="21" r="1.4" fill="currentColor" /><circle cx="17" cy="21" r="1.4" fill="currentColor" />
           </svg>
           Carrito
-          <AnimatePresence>
-            {cartCount > 0 && (
-              <motion.span
-                key={cartCount}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0 }}
-                className="bg-peach-deep text-ink rounded-full min-w-[20px] h-5 text-xs font-extrabold flex items-center justify-center px-1.5"
-              >
-                {cartCount}
-              </motion.span>
-            )}
-          </AnimatePresence>
+          <AnimatePresence>{cartCount > 0 && <motion.span key={cartCount} initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className="flex h-5 min-w-5 items-center justify-center rounded-full bg-peach-deep px-1.5 text-xs font-extrabold text-ink">{cartCount}</motion.span>}</AnimatePresence>
         </motion.button>
       </div>
     </header>
   );
+}
+
+const LANDING_LINKS = [
+  { href: '#inicio', label: 'Inicio' },
+  { href: '#categorias', label: 'Categorías' },
+  { href: '#como-comprar', label: 'Cómo comprar' },
+  { href: '#opiniones', label: 'Opiniones' },
+];
+
+function LandingNavbar({ scrolled }) {
+  const { contactWhatsAppForHelp } = useCart();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const closeOnEscape = (event) => { if (event.key === 'Escape') setMenuOpen(false); };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [menuOpen]);
+
+  return (
+    <header className={`sticky top-0 z-[200] border-b transition-all duration-300 ${scrolled || menuOpen ? 'border-[var(--ba-border)] bg-[var(--ba-warm-white)]/95 shadow-[0_8px_30px_rgba(16,36,62,0.06)] backdrop-blur-xl' : 'border-transparent bg-[var(--ba-ivory)]/80 backdrop-blur-md'}`}>
+      <div className="mx-auto flex min-h-[72px] max-w-[1240px] items-center justify-between gap-4 px-5 sm:px-8 lg:px-10">
+        <a href="#inicio" className="flex items-center gap-3" onClick={() => setMenuOpen(false)}>
+          <BrandMark premium />
+          <span className="leading-none">
+            <span className="block font-display text-lg font-semibold tracking-tight text-[var(--ba-navy-deep)] sm:text-xl">B&A.EC Store</span>
+            <span className="mt-1 block text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[var(--ba-muted)]">Boutique multirrubro</span>
+          </span>
+        </a>
+
+        <nav aria-label="Navegación principal" className="hidden items-center gap-5 xl:flex">
+          {LANDING_LINKS.map((item) => <a key={item.href} href={item.href} className="py-3 text-[0.78rem] font-bold text-[var(--ba-muted)] transition-colors hover:text-[var(--ba-navy)]">{item.label}</a>)}
+        </nav>
+
+        <div className="hidden items-center gap-2 md:flex">
+          <Link to="/tienda" className="inline-flex min-h-11 items-center rounded-full border border-[var(--ba-border)] bg-[var(--ba-warm-white)] px-5 text-sm font-extrabold text-[var(--ba-navy)] transition hover:border-[var(--ba-copper-soft)]">Ir a la tienda</Link>
+          <button type="button" onClick={contactWhatsAppForHelp} className="inline-flex min-h-11 items-center rounded-full bg-[var(--ba-navy)] px-5 text-sm font-extrabold text-white transition hover:bg-[var(--ba-navy-deep)]">Hablar con un asesor</button>
+        </div>
+
+        <button type="button" aria-expanded={menuOpen} aria-controls="landing-mobile-menu" aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'} onClick={() => setMenuOpen((open) => !open)} className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--ba-border)] bg-[var(--ba-warm-white)] text-[var(--ba-navy)] md:hidden">
+          {menuOpen ? <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg> : <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>}
+        </button>
+      </div>
+
+      {menuOpen && (
+        <nav id="landing-mobile-menu" aria-label="Navegación móvil" className="border-t border-[var(--ba-border)] bg-[var(--ba-warm-white)] px-5 pb-5 pt-3 md:hidden">
+          <div className="mx-auto flex max-w-[1240px] flex-col">
+            {LANDING_LINKS.map((item) => <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)} className="flex min-h-12 items-center border-b border-[var(--ba-border)]/70 text-sm font-bold text-[var(--ba-graphite)]">{item.label}</a>)}
+            <Link to="/tienda" onClick={() => setMenuOpen(false)} className="mt-4 inline-flex min-h-12 items-center justify-center rounded-full border border-[var(--ba-navy)] text-sm font-extrabold text-[var(--ba-navy)]">Ir a la tienda</Link>
+            <button type="button" onClick={() => { setMenuOpen(false); contactWhatsAppForHelp(); }} className="mt-2 inline-flex min-h-12 items-center justify-center rounded-full bg-[var(--ba-navy)] text-sm font-extrabold text-white">Hablar con un asesor</button>
+          </div>
+        </nav>
+      )}
+    </header>
+  );
+}
+
+export default function Navbar() {
+  const location = useLocation();
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 32);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  return location.pathname.startsWith('/tienda') ? <StoreNavbar scrolled={scrolled} /> : <LandingNavbar scrolled={scrolled} />;
 }

@@ -106,7 +106,7 @@ export default function Testimonials() {
   if (testimonialsStatus === 'error') return null;
 
   return (
-    <section className="py-28 sm:py-36 px-6 bg-gradient-to-b from-cream-deep/30 to-cream">
+    <section id="opiniones" className="py-28 sm:py-36 px-6 bg-gradient-to-b from-cream-deep/30 to-cream">
       <div className="max-w-[1180px] mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-14">
           <div className="max-w-xl">
