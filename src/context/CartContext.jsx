@@ -93,8 +93,11 @@ export function CartProvider({ children }) {
     if (message) openWhatsApp(WHATSAPP_NUMBER, message);
   }, [cartItems, cartSubtotal, shippingCost, selectedMethod]);
 
-  const contactWhatsAppForHelp = useCallback(() => {
-    openWhatsApp(WHATSAPP_NUMBER, '¡Hola! Necesito ayuda con un producto especial. ¿Me podrían ayudar?');
+  const contactWhatsAppForHelp = useCallback((message) => {
+    const humanMessage = typeof message === 'string'
+      ? message
+      : '¡Hola! Necesito ayuda con los productos de B&A.EC Store. ¿Me podrían ayudar?';
+    openWhatsApp(WHATSAPP_NUMBER, humanMessage);
   }, []);
 
   const value = useMemo(() => ({

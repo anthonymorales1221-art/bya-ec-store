@@ -1,12 +1,16 @@
 import { useEffect } from 'react';
-import AnimatedBackground from '../components/AnimatedBackground';
 import Hero from '../components/Hero';
 import TrustStrip from '../components/TrustStrip';
 import StorySection from '../components/StorySection';
 import Categories from '../components/Categories';
+import FeaturedProducts from '../components/FeaturedProducts';
+import BuyingJourney from '../components/BuyingJourney';
+import DeliveryPayments from '../components/DeliveryPayments';
 import Testimonials from '../components/Testimonials';
 import Evidencias from '../components/Evidencias';
-import TransitionCTA from '../components/TransitionCTA';
+import AfterSales from '../components/AfterSales';
+import PremiumFaq from '../components/PremiumFaq';
+import ImmersiveCTA from '../components/ImmersiveCTA';
 import { useScrollAnimationsCleanup } from '../hooks/useScrollAnimations';
 
 export default function Landing() {
@@ -20,14 +24,18 @@ export default function Landing() {
 
   return (
     <div className="relative">
-      <AnimatedBackground />
       <Hero />
       <TrustStrip />
-      <StorySection />
       <Categories />
+      <StorySection />
+      <FeaturedProducts />
+      <BuyingJourney />
+      <DeliveryPayments />
       <Testimonials />
       <Evidencias />
-      <TransitionCTA />
+      <AfterSales />
+      <PremiumFaq />
+      <ImmersiveCTA />
     </div>
   );
 }

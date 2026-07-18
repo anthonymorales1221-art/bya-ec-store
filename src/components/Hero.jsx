@@ -1,5 +1,7 @@
+import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../hooks/useCart';
+import { useElementScrollProgress, usePointerMotion } from '../hooks/useLandingMotion';
 
 const TRUST_ITEMS = [
   'Envíos a todo Ecuador',
@@ -9,21 +11,16 @@ const TRUST_ITEMS = [
 
 export default function Hero() {
   const { contactWhatsAppForHelp } = useCart();
+  const heroRef = useRef(null);
+  usePointerMotion(heroRef);
+  useElementScrollProgress(heroRef, '--hero-progress');
 
   return (
-    <section id="inicio" className="ba-hero relative isolate overflow-hidden" aria-labelledby="hero-title">
+    <section ref={heroRef} id="inicio" className="ba-hero relative isolate overflow-hidden" aria-labelledby="hero-title">
       <div className="absolute inset-0 bg-[var(--ba-ivory)]" aria-hidden="true" />
-      <img
-        src="/images/hero/ba-ec-hero-premium.png"
-        alt=""
-        width="1920"
-        height="1080"
-        fetchPriority="high"
-        decoding="async"
-        className="ba-hero-image absolute inset-0 h-full w-full object-cover"
-        onError={(event) => { event.currentTarget.hidden = true; }}
-        aria-hidden="true"
-      />
+      <div className="ba-hero-media absolute inset-0 overflow-hidden" aria-hidden="true">
+        <img src="/images/hero/ba-ec-hero-premium.png" alt="" width="1672" height="941" fetchPriority="high" decoding="async" className="ba-hero-image h-full w-full object-cover" />
+      </div>
       <div className="ba-hero-overlay absolute inset-0" aria-hidden="true" />
       <div className="ba-hero-glow absolute inset-0" aria-hidden="true" />
 
