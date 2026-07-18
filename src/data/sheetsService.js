@@ -1,4 +1,5 @@
 import { SHEET_ID, SHEET_NAME, TESTIMONIOS_SHEET_NAME, EVIDENCIAS_SHEET_NAME } from '../data/config';
+import { validateEvidencias, validateProducts, validateTestimonials } from '../domain/catalog';
 
 /* ============================================================
    GOOGLE SHEETS — carga dinámica del catálogo y testimonios
@@ -8,8 +9,9 @@ import { SHEET_ID, SHEET_NAME, TESTIMONIOS_SHEET_NAME, EVIDENCIAS_SHEET_NAME } f
    (secciones 9 y 10: timeout, reintentos, cola de resolutores JSONP).
 ============================================================ */
 
-function buildSheetUrl(sheetName) {
-  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+function buildSheetUrl(sheetName, responseHandler = null) {
+  const tqx = responseHandler ? `responseHandler:${responseHandler}` : 'out:json';
+  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=${encodeURIComponent(tqx)}&sheet=${encodeURIComponent(sheetName)}`;
 }
 
 // Convierte un link de "compartir" de Google Drive al formato funcional como <img src>.
@@ -182,44 +184,32 @@ function fetchWithTimeout(url, timeoutMs = 8000) {
   return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(timer));
 }
 
-// Cola de resolutores pendientes para el callback estándar de Google
-// (google.visualization.Query.setResponse). Soporta peticiones paralelas
-// sin inventar nombres de función dinámicos — ver DECISIONES.md sección 10.
-const gvizPendingResolvers = [];
-
-if (typeof window !== 'undefined') {
-  window.google = window.google || {};
-  window.google.visualization = window.google.visualization || {};
-  window.google.visualization.Query = window.google.visualization.Query || {};
-  window.google.visualization.Query.setResponse = function (response) {
-    const next = gvizPendingResolvers.shift();
-    if (next) next.resolve(response);
-  };
-}
+let jsonpRequestId = 0;
 
 function fetchSheetJsonp(sheetName, timeoutMs = 8000) {
   return new Promise((resolve, reject) => {
-    const url = buildSheetUrl(sheetName);
+    const callbackName = `__byaGvizCallback${jsonpRequestId++}`;
+    const url = buildSheetUrl(sheetName, callbackName);
     const script = document.createElement('script');
     let settled = false;
 
-    const resolver = {
-      resolve: (response) => {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timer);
-        script.remove();
-        resolve(response);
-      },
+    const cleanup = () => {
+      clearTimeout(timer);
+      script.remove();
+      delete window[callbackName];
     };
-    gvizPendingResolvers.push(resolver);
+
+    window[callbackName] = (response) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve(response);
+    };
 
     const timer = setTimeout(() => {
       if (settled) return;
       settled = true;
-      const i = gvizPendingResolvers.indexOf(resolver);
-      if (i !== -1) gvizPendingResolvers.splice(i, 1);
-      script.remove();
+      cleanup();
       reject(new Error('Timeout cargando datos desde Google Sheets (JSONP)'));
     }, timeoutMs);
 
@@ -227,10 +217,7 @@ function fetchSheetJsonp(sheetName, timeoutMs = 8000) {
     script.onerror = () => {
       if (settled) return;
       settled = true;
-      clearTimeout(timer);
-      const i = gvizPendingResolvers.indexOf(resolver);
-      if (i !== -1) gvizPendingResolvers.splice(i, 1);
-      script.remove();
+      cleanup();
       reject(new Error('Error de red cargando script JSONP'));
     };
 
@@ -269,19 +256,23 @@ async function fetchSheetWithRetry(sheetName, attempts = 3) {
 
 export async function fetchProducts() {
   const gvizData = await fetchSheetWithRetry(SHEET_NAME);
-  return gvizRowsToProducts(gvizData);
+  const result = validateProducts(gvizRowsToProducts(gvizData));
+  if (result.issues.length > 0) {
+    console.warn('[Catálogo] Se descartaron filas inválidas:', result.issues);
+  }
+  return result.valid;
 }
 
 export async function fetchTestimonials() {
   const gvizData = await fetchSheetWithRetry(TESTIMONIOS_SHEET_NAME);
-  return gvizRowsToTestimonials(gvizData);
+  return validateTestimonials(gvizRowsToTestimonials(gvizData));
 }
 
 export async function fetchEvidencias() {
   const gvizData = await fetchSheetWithRetry(EVIDENCIAS_SHEET_NAME);
   const cols = gvizData.table.cols.map((c) => (c.label || '').trim().toLowerCase());
   const rawRowCount = (gvizData.table.rows || []).length;
-  const list = gvizRowsToEvidencias(gvizData);
+  const list = validateEvidencias(gvizRowsToEvidencias(gvizData));
 
   // Diagnóstico visible en la consola del navegador (F12 → Console).
   // No afecta lo que ve el usuario final, pero ayuda a detectar de inmediato

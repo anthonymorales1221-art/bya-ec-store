@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { useScaleReveal, useWordReveal, useFadeUp } from '../hooks/useScrollAnimations';
+import { useScaleReveal, useWordReveal } from '../hooks/useScrollAnimations';
 
 gsap.registerPlugin(ScrollTrigger);
 

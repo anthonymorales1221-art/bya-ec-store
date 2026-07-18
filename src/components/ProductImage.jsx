@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { getInitials } from '../data/format';
+import { extractDriveId } from '../domain/image';
 
 /**
  * <img> resiliente para fotos de producto/testimonio que vienen de Google Drive.
@@ -14,17 +15,6 @@ import { getInitials } from '../data/format';
  *   2) uc?export=view&id=... (variante alterna, distinto detrás de escenas)
  *   3) iniciales del nombre, con el mismo estilo en toda la app
  */
-export function extractDriveId(url) {
-  if (!url) return null;
-  const match = url.match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
-  return match ? match[1] : null;
-}
-
-export function getDriveFallbackUrl(url) {
-  const id = extractDriveId(url);
-  return id ? `https://drive.google.com/uc?export=view&id=${id}` : null;
-}
-
 export default function ProductImage({ src, alt, className, fallbackClassName, fallbackTextClassName, absolute = false }) {
   const [stage, setStage] = useState(0); // 0 = src original, 1 = variante alterna, 2 = iniciales
 

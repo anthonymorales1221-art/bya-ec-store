@@ -53,10 +53,13 @@ src/
   components/       Navbar, Hero, StorySection, Categories, Testimonials,
                      TransitionCTA, ProductGrid, ProductModal, CartDrawer,
                      Footer, AnimatedBackground, FluidHero
-  hooks/            useCart, useScrollAnimations, useParallax
-  context/          CartContext (estado global: catálogo, carrito, checkout)
-  data/             config.js, deliveryMethods.js, sheetsService.js, format.js
+  hooks/            API de contenido/carrito y hooks de animación
+  context/          Providers separados de contenido y carrito
+  domain/           Reglas puras y validación de catálogo/carrito
+  services/         Persistencia local y construcción del checkout
+  data/             Configuración y adaptador de Google Sheets
   pages/            Landing.jsx, Store.jsx
+test/               Pruebas unitarias con el runner nativo de Node
 ```
 
 ## Decisiones de diseño relevantes
