@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -32,31 +32,11 @@ const CATEGORY_MOTION_TIMING = {
   scrubSmoothing: 1.1,
 };
 
-const PRESENTATION_CATEGORIES = [
-  {
-    id: 'beauty',
-    title: 'Belleza y cuidado',
-    description: 'Productos seleccionados para verte, cuidarte y sentirte bien cada día.',
-    matches: /belleza|cuidado|perfume|cosm[eé]tica/i,
-  },
-  {
-    id: 'home',
-    title: 'Hogar y bienestar',
-    description: 'Detalles funcionales que aportan orden, comodidad y bienestar a tus espacios.',
-    matches: /hogar|bienestar|casa|cocina/i,
-  },
-  {
-    id: 'vehicle',
-    title: 'Accesorios para vehículo',
-    description: 'Soluciones prácticas para acompañarte y hacer más cómodos tus recorridos.',
-    matches: /veh[ií]culo|auto|carro|moto|automotriz/i,
-  },
-  {
-    id: 'new',
-    title: 'Novedades y favoritos',
-    description: 'Descubre los productos destacados y las incorporaciones más recientes de la tienda.',
-    matches: /novedad|favorito|destacado/i,
-  },
+const CATEGORY_RESOLUTION_RULES = [
+  { id: 'beauty', titleMatch: /belleza|cuidado|perfume|cosmetica/, productMatch: /belleza|cuidado|perfume|cosm[eé]tica/i },
+  { id: 'home', titleMatch: /hogar|bienestar|casa|cocina/, productMatch: /hogar|bienestar|casa|cocina/i },
+  { id: 'vehicle', titleMatch: /vehiculo|auto|carro|moto|automotriz/, productMatch: /veh[ií]culo|auto|carro|moto|automotriz/i },
+  { id: 'new', titleMatch: /novedad|favorito|destacado/, productMatch: /novedad|favorito|destacado/i, usesFeatured: true },
 ];
 
 function createPanelWindows(panelCount) {
@@ -72,29 +52,64 @@ function createPanelWindows(panelCount) {
   }));
 }
 
-function curateCategories(products) {
-  return PRESENTATION_CATEGORIES.map((presentation) => {
-    const matches = products.filter((product) => presentation.matches.test(product.category || ''));
-    const candidates = presentation.id === 'new'
+function normalizeCategoryKey(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function validCategoryRoute(value) {
+  const route = String(value || '').trim().replace(/\/$/, '');
+  return route === '/tienda' ? '/tienda' : '';
+}
+
+function curateCategories(sheetCategories, products) {
+  const productCategories = [...new Set(products.map((product) => product.category).filter(Boolean))];
+
+  return sheetCategories.map((sheetCategory) => {
+    const titleKey = normalizeCategoryKey(sheetCategory.title);
+    const rule = CATEGORY_RESOLUTION_RULES.find((item) => item.titleMatch.test(titleKey));
+    const requestedCategory = normalizeCategoryKey(sheetCategory.slug || sheetCategory.title);
+    const exactCategory = productCategories.find(
+      (category) => normalizeCategoryKey(category) === requestedCategory,
+    );
+    const matchedCategory = exactCategory || productCategories.find(
+      (category) => rule?.productMatch.test(category),
+    ) || '';
+    const matchedProducts = rule?.usesFeatured
       ? products.filter((product) => product.featured && product.stock > 0)
-      : matches;
-    const cover = candidates.find((product) => product.featured && product.img)
-      || candidates.find((product) => product.img);
+      : products.filter((product) => matchedCategory && product.category === matchedCategory);
+    const cover = matchedProducts.find((product) => product.featured && product.img)
+      || matchedProducts.find((product) => product.img);
+    const route = validCategoryRoute(sheetCategory.route) || (matchedCategory || rule ? '/tienda' : '');
 
     return {
-      ...presentation,
-      image: cover?.img || '',
-      sourceCategory: matches[0]?.category || '',
+      id: sheetCategory.id,
+      visualId: rule?.id || 'neutral',
+      title: sheetCategory.title,
+      description: sheetCategory.description,
+      image: sheetCategory.image,
+      fallbackImage: cover?.img || '',
+      route,
+      sourceCategory: matchedCategory,
+      imagePosition: 'center',
     };
   });
 }
 
 export default function Categories() {
-  const { products, catalogStatus } = useCart();
+  const { categories: sheetCategories, categoriesStatus, products } = useCart();
   const sectionRef = useRef(null);
   const stageRef = useRef(null);
   const counterRef = useRef(null);
-  const categories = useMemo(() => curateCategories(products), [products]);
+  const categories = useMemo(
+    () => curateCategories(sheetCategories, products),
+    [sheetCategories, products],
+  );
   const panelWindows = useMemo(() => createPanelWindows(categories.length), [categories.length]);
   const desktopScrollDistance = Math.max(
     CATEGORY_SCROLL_SETTINGS.minimumScrollDistance,
@@ -117,11 +132,19 @@ export default function Categories() {
     event.currentTarget.style.setProperty('--media-y', '0px');
   };
 
+  useEffect(() => {
+    if (!import.meta.env.DEV || categoriesStatus !== 'ready') return;
+    const unresolved = categories.filter((category) => !category.route).map((category) => category.title);
+    if (unresolved.length > 0) {
+      console.warn('[Categorías] CTA deshabilitado porque no existe una ruta/categoría real:', unresolved);
+    }
+  }, [categories, categoriesStatus]);
+
   useLayoutEffect(() => {
     const section = sectionRef.current;
     const stage = stageRef.current;
     const enabled = window.matchMedia('(min-width: 900px) and (prefers-reduced-motion: no-preference)').matches;
-    if (!section || !stage || !enabled) return undefined;
+    if (!section || !stage || !enabled || categoriesStatus !== 'ready' || categories.length === 0) return undefined;
 
     const context = gsap.context(() => {
       const intro = stage.querySelector('[data-category-intro]');
@@ -164,7 +187,8 @@ export default function Categories() {
               (current, window, index) => (playhead >= window.start ? index : current),
               0,
             );
-            counterRef.current.textContent = `${String(active + 1).padStart(2, '0')} / 04`;
+            const total = String(categories.length).padStart(2, '0');
+            counterRef.current.textContent = `${String(active + 1).padStart(2, '0')} / ${total}`;
           },
         },
       });
@@ -265,9 +289,20 @@ export default function Categories() {
     }, section);
 
     return () => context.revert();
-  }, [catalogStatus, categories, panelWindows]);
+  }, [categoriesStatus, categories, panelWindows]);
 
-  if (catalogStatus === 'error') return null;
+  if (categoriesStatus === 'loading') {
+    return (
+      <section id="categorias" className="flex min-h-[70svh] items-center justify-center bg-[var(--ba-navy-deep)]" aria-busy="true">
+        <span className="visually-hidden">Cargando categorías</span>
+        <span className="h-px w-24 animate-pulse bg-[var(--ba-copper-soft)]/45" aria-hidden="true" />
+      </section>
+    );
+  }
+
+  if (categoriesStatus === 'error' || categories.length === 0) return null;
+
+  const totalLabel = String(categories.length).padStart(2, '0');
 
   return (
     <section
@@ -290,13 +325,41 @@ export default function Categories() {
 
         <div className="ba-categories-label" data-category-label aria-hidden="true">
           <span>Categorías</span>
-          <span ref={counterRef}>01 / 04</span>
+          <span ref={counterRef}>01 / {totalLabel}</span>
           <i><span /></i>
         </div>
 
         <div className="ba-category-panels">
           {categories.map((category, index) => {
             const routeState = category.sourceCategory ? { category: category.sourceCategory } : undefined;
+            const mediaClassName = `ba-category-media ba-category-media--${category.visualId}`;
+            const mediaContent = (
+              <span
+                className="ba-category-surface"
+                data-category-surface
+                style={{ '--category-image-position': category.imagePosition }}
+              >
+                {(category.image || category.fallbackImage) && (
+                  <span className="ba-category-image-wrap" data-category-image>
+                    <ProductImage
+                      absolute
+                      src={category.image}
+                      fallbackSrc={category.fallbackImage}
+                      alt={`Selección de ${category.title}`}
+                      className="ba-category-image h-full w-full object-cover"
+                      fallbackClassName="hidden"
+                    />
+                  </span>
+                )}
+                <span className="ba-category-shade" aria-hidden="true" />
+                <span
+                  className="pointer-events-none absolute inset-0 bg-[var(--ba-navy-deep)]"
+                  data-category-depth
+                  aria-hidden="true"
+                />
+                {category.route && <span className="ba-category-band" aria-hidden="true">Ver categoría</span>}
+              </span>
+            );
 
             return (
               <article
@@ -305,41 +368,24 @@ export default function Categories() {
                 data-category-panel
                 style={{ '--category-index': index }}
               >
-                <Link
-                  to="/tienda"
-                  state={routeState}
-                  className={`ba-category-media ba-category-media--${category.id}`}
-                  data-category-media
-                  data-cursor="EXPLORAR"
-                  aria-label={`Explorar ${category.title}`}
-                  onPointerMove={handleMediaPointerMove}
-                  onPointerLeave={resetMediaPointer}
-                >
-                  <span className="ba-category-surface" data-category-surface>
-                    {category.image && (
-                      <span className="ba-category-image-wrap" data-category-image>
-                        <ProductImage
-                          absolute
-                          src={category.image}
-                          alt={`Selección de ${category.title}`}
-                          className="ba-category-image h-full w-full object-cover"
-                          fallbackClassName="hidden"
-                        />
-                      </span>
-                    )}
-                    <span className="ba-category-orbit" aria-hidden="true" />
-                    <span className="ba-category-monogram font-display" aria-hidden="true">
-                      {String(index + 1).padStart(2, '0')}
-                    </span>
-                    <span className="ba-category-shade" aria-hidden="true" />
-                    <span
-                      className="pointer-events-none absolute inset-0 bg-[var(--ba-navy-deep)]"
-                      data-category-depth
-                      aria-hidden="true"
-                    />
-                    <span className="ba-category-band" aria-hidden="true">Ver categoría</span>
-                  </span>
-                </Link>
+                {category.route ? (
+                  <Link
+                    to={category.route}
+                    state={routeState}
+                    className={mediaClassName}
+                    data-category-media
+                    data-cursor="EXPLORAR"
+                    aria-label={`Explorar ${category.title}`}
+                    onPointerMove={handleMediaPointerMove}
+                    onPointerLeave={resetMediaPointer}
+                  >
+                    {mediaContent}
+                  </Link>
+                ) : (
+                  <div className={mediaClassName} data-category-media aria-label={category.title}>
+                    {mediaContent}
+                  </div>
+                )}
 
                 <div className="ba-category-copy">
                   <span className="ba-category-number font-display" data-category-copy>
@@ -349,14 +395,20 @@ export default function Categories() {
                     <h3 className="ba-category-title font-display" data-category-copy>{category.title}</h3>
                     <p className="ba-category-description" data-category-copy>{category.description}</p>
                   </div>
-                  <Link
-                    to="/tienda"
-                    state={routeState}
-                    className="ba-arrow-link w-fit text-white"
-                    data-category-copy
-                  >
-                    Explorar categoría <span aria-hidden="true">→</span>
-                  </Link>
+                  {category.route ? (
+                    <Link
+                      to={category.route}
+                      state={routeState}
+                      className="ba-arrow-link w-fit text-white"
+                      data-category-copy
+                    >
+                      Explorar categoría <span aria-hidden="true">→</span>
+                    </Link>
+                  ) : (
+                    <span className="ba-arrow-link w-fit cursor-not-allowed text-white/45" data-category-copy aria-disabled="true">
+                      Explorar categoría
+                    </span>
+                  )}
                 </div>
               </article>
             );

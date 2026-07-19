@@ -1,40 +1,59 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { fetchEvidencias, fetchProducts, fetchTestimonials } from '../data/sheetsService';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { fetchCategories, fetchEvidencias, fetchProducts, fetchTestimonials } from '../data/sheetsService';
 import { ContentContext } from './content-context';
 
 function useRemoteCollection(loader) {
   const [data, setData] = useState([]);
   const [status, setStatus] = useState('loading');
+  const [error, setError] = useState(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const reload = useCallback(async () => {
-    setStatus('loading');
+    if (mountedRef.current) setStatus('loading');
+    if (mountedRef.current) setError(null);
     try {
       const list = await loader();
-      setData(list);
-      setStatus('ready');
+      if (mountedRef.current) {
+        setData(list);
+        setStatus('ready');
+      }
       return list;
-    } catch {
-      setStatus('error');
+    } catch (error) {
+      if (import.meta.env.DEV) console.warn('[Contenido] No se pudo cargar una colección remota:', error);
+      if (mountedRef.current) {
+        setError(error);
+        setStatus('error');
+      }
       return null;
     }
   }, [loader]);
 
-  return { data, status, reload };
+  return { data, status, error, reload };
 }
 
 export function ContentProvider({ children }) {
   const catalog = useRemoteCollection(fetchProducts);
   const testimonials = useRemoteCollection(fetchTestimonials);
   const evidencias = useRemoteCollection(fetchEvidencias);
+  const categories = useRemoteCollection(fetchCategories);
   const { reload: reloadCatalog } = catalog;
   const { reload: reloadTestimonials } = testimonials;
   const { reload: reloadEvidencias } = evidencias;
+  const { reload: reloadCategories } = categories;
 
   useEffect(() => {
     reloadCatalog();
     reloadTestimonials();
     reloadEvidencias();
-  }, [reloadCatalog, reloadTestimonials, reloadEvidencias]);
+    reloadCategories();
+  }, [reloadCatalog, reloadTestimonials, reloadEvidencias, reloadCategories]);
 
   const value = useMemo(() => ({
     products: catalog.data,
@@ -46,7 +65,11 @@ export function ContentProvider({ children }) {
     evidencias: evidencias.data,
     evidenciasStatus: evidencias.status,
     reloadEvidencias: evidencias.reload,
-  }), [catalog, testimonials, evidencias]);
+    categories: categories.data,
+    categoriesStatus: categories.status,
+    categoriesError: categories.error,
+    reloadCategories: categories.reload,
+  }), [catalog, testimonials, evidencias, categories]);
 
   return <ContentContext.Provider value={value}>{children}</ContentContext.Provider>;
 }

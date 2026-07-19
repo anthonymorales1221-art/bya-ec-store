@@ -1,5 +1,12 @@
-import { SHEET_ID, SHEET_NAME, TESTIMONIOS_SHEET_NAME, EVIDENCIAS_SHEET_NAME } from '../data/config';
-import { validateEvidencias, validateProducts, validateTestimonials } from '../domain/catalog';
+import {
+  CATEGORIES_SHEET_NAME,
+  CATEGORIES_SHEET_GID,
+  EVIDENCIAS_SHEET_NAME,
+  SHEET_ID,
+  SHEET_NAME,
+  TESTIMONIOS_SHEET_NAME,
+} from '../data/config.js';
+import { validateEvidencias, validateProducts, validateTestimonials } from '../domain/catalog.js';
 
 /* ============================================================
    GOOGLE SHEETS — carga dinámica del catálogo y testimonios
@@ -9,9 +16,45 @@ import { validateEvidencias, validateProducts, validateTestimonials } from '../d
    (secciones 9 y 10: timeout, reintentos, cola de resolutores JSONP).
 ============================================================ */
 
-function buildSheetUrl(sheetName, responseHandler = null) {
+export function buildSheetUrl(sheetName, responseHandler = null, gid = '') {
+  const normalizedSheetName = String(sheetName || '').trim().normalize('NFC');
   const tqx = responseHandler ? `responseHandler:${responseHandler}` : 'out:json';
-  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=${encodeURIComponent(tqx)}&sheet=${encodeURIComponent(sheetName)}`;
+  const url = new URL(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq`);
+  url.searchParams.set('tqx', tqx);
+  url.searchParams.set('sheet', normalizedSheetName);
+  if (String(gid || '').trim()) url.searchParams.set('gid', String(gid).trim());
+  if (import.meta.env?.DEV) url.searchParams.set('_', String(Date.now()));
+  return url.toString();
+}
+
+function normalizeHeader(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function stableIdFromTitle(title) {
+  const slug = normalizeHeader(title)
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+  if (slug) return slug;
+  const hash = [...String(title)].reduce(
+    (value, character) => ((value * 31) + character.codePointAt(0)) >>> 0,
+    2166136261,
+  );
+  return `categoria-${hash.toString(36)}`;
+}
+
+function isPublicWebUrl(value) {
+  if (!value) return true;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:';
+  } catch {
+    return false;
+  }
 }
 
 // Convierte un link de "compartir" de Google Drive al formato funcional como <img src>.
@@ -140,6 +183,57 @@ function gvizRowsToTestimonials(gvizData) {
     .filter((t) => t.nombre && t.texto && t.activo);
 }
 
+export function gvizRowsToCategories(gvizData) {
+  const table = inferTableHeaders(gvizData.table);
+  const cols = table.cols.map((column) => normalizeHeader(column.label));
+  const rows = table.rows;
+  const indexOf = (...names) => names.map(normalizeHeader).map((name) => cols.indexOf(name)).find((index) => index >= 0) ?? -1;
+  const indexes = {
+    title: indexOf('Titulo', 'Título'),
+    description: indexOf('Descripcion', 'Descripción'),
+    image: indexOf('Imagen'),
+    route: indexOf('Ruta'),
+    slug: indexOf('Slug'),
+  };
+  const issues = [];
+
+  const categories = rows.flatMap((row, rowIndex) => {
+    const cells = row.c || [];
+    const get = (index) => {
+      if (index < 0 || !cells[index]) return '';
+      const value = cells[index].v;
+      return value === null || value === undefined ? '' : String(value).trim();
+    };
+    const title = get(indexes.title);
+    const description = get(indexes.description);
+    const rawImage = get(indexes.image);
+    const route = get(indexes.route);
+    const slug = get(indexes.slug);
+
+    if (![title, description, rawImage, route, slug].some(Boolean)) return [];
+    if (!title) {
+      issues.push(`Fila ${rowIndex + 2}: título vacío`);
+      return [];
+    }
+
+    const image = resolveDriveImageUrl(rawImage);
+    if (image && !isPublicWebUrl(image)) {
+      issues.push(`Fila ${rowIndex + 2}: URL de imagen inválida`);
+    }
+
+    return [{
+      id: stableIdFromTitle(title),
+      title,
+      description,
+      image: isPublicWebUrl(image) ? image : '',
+      route,
+      slug,
+    }];
+  });
+
+  return { categories, issues };
+}
+
 // Evidencias — sección tipo "blog" en la landing, con imagen grande, foto pequeña
 // de autor/contexto, nombre, fecha (o cualquier descripción corta de fecha) y texto.
 // Misma convención que Productos/Testimonios: la columna 'activo' decide qué se
@@ -171,11 +265,62 @@ function gvizRowsToEvidencias(gvizData) {
     .filter((e) => e.nombre && e.fotoGrande && e.activo);
 }
 
-function parseGvizResponse(text) {
-  const jsonStart = text.indexOf('{');
-  const jsonEnd = text.lastIndexOf('}');
-  const jsonStr = text.substring(jsonStart, jsonEnd + 1);
-  return JSON.parse(jsonStr);
+function cellText(cell) {
+  const value = cell?.v;
+  return value === null || value === undefined ? '' : String(value).trim();
+}
+
+function inferTableHeaders(table) {
+  if (!table || !Array.isArray(table.cols) || !Array.isArray(table.rows)) {
+    throw new Error('La respuesta GViz no contiene una tabla con columnas y filas válidas.');
+  }
+
+  const hasLabels = table.cols.some((column) => String(column?.label || '').trim());
+  if (hasLabels || table.rows.length === 0) return table;
+
+  const firstRow = table.rows[0]?.c;
+  if (!Array.isArray(firstRow)) return table;
+  const inferredLabels = firstRow.map(cellText);
+  if (!inferredLabels.some(Boolean)) return table;
+
+  return {
+    ...table,
+    cols: table.cols.map((column, index) => ({ ...column, label: inferredLabels[index] || '' })),
+    rows: table.rows.slice(1),
+  };
+}
+
+export function parseGvizResponse(text) {
+  if (typeof text !== 'string') throw new TypeError('La respuesta GViz debe ser texto.');
+  const wrapper = 'google.visualization.Query.setResponse';
+  const wrapperIndex = text.indexOf(wrapper);
+  if (wrapperIndex < 0) {
+    const kind = /^\s*</.test(text) ? 'HTML inesperado' : 'wrapper GViz ausente';
+    throw new Error(`Respuesta inválida de Google Sheets: ${kind}.`);
+  }
+  const openParenthesis = text.indexOf('(', wrapperIndex + wrapper.length);
+  const closeParenthesis = text.lastIndexOf(')');
+  if (openParenthesis < 0 || closeParenthesis <= openParenthesis) {
+    throw new Error('Respuesta GViz incompleta: no se encontró el payload JSON.');
+  }
+
+  let payload;
+  try {
+    payload = JSON.parse(text.slice(openParenthesis + 1, closeParenthesis));
+  } catch (error) {
+    throw new Error(`No se pudo interpretar el payload GViz: ${error.message}`, { cause: error });
+  }
+  if (payload?.status === 'error') {
+    const details = (payload.errors || [])
+      .map((entry) => [entry?.reason, entry?.message, entry?.detailed_message].filter(Boolean).join(': '))
+      .filter(Boolean)
+      .join(' | ');
+    throw new Error(`Google Sheets devolvió un error${details ? `: ${details}` : '.'}`);
+  }
+  if (!payload?.table || !Array.isArray(payload.table.cols) || !Array.isArray(payload.table.rows)) {
+    throw new Error('El payload GViz no contiene table.cols y table.rows.');
+  }
+  return payload;
 }
 
 function fetchWithTimeout(url, timeoutMs = 8000) {
@@ -186,10 +331,10 @@ function fetchWithTimeout(url, timeoutMs = 8000) {
 
 let jsonpRequestId = 0;
 
-function fetchSheetJsonp(sheetName, timeoutMs = 8000) {
+function fetchSheetJsonp(sheetName, timeoutMs = 8000, gid = '') {
   return new Promise((resolve, reject) => {
     const callbackName = `__byaGvizCallback${jsonpRequestId++}`;
-    const url = buildSheetUrl(sheetName, callbackName);
+    const url = buildSheetUrl(sheetName, callbackName, gid);
     const script = document.createElement('script');
     let settled = false;
 
@@ -203,6 +348,14 @@ function fetchSheetJsonp(sheetName, timeoutMs = 8000) {
       if (settled) return;
       settled = true;
       cleanup();
+      if (response?.status === 'error') {
+        reject(new Error(`Google Sheets devolvió un error JSONP: ${JSON.stringify(response.errors || [])}`));
+        return;
+      }
+      if (!response?.table || !Array.isArray(response.table.cols) || !Array.isArray(response.table.rows)) {
+        reject(new Error('La respuesta JSONP no contiene una tabla GViz válida.'));
+        return;
+      }
       resolve(response);
     };
 
@@ -225,25 +378,26 @@ function fetchSheetJsonp(sheetName, timeoutMs = 8000) {
   });
 }
 
-async function fetchSheetData(sheetName) {
-  const url = buildSheetUrl(sheetName);
+async function fetchSheetData(sheetName, gid = '') {
+  const url = buildSheetUrl(sheetName, null, gid);
   try {
     const res = await fetchWithTimeout(url, 8000);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text();
     return parseGvizResponse(text);
-  } catch {
+  } catch (error) {
+    if (import.meta.env?.DEV) console.warn('[Google Sheets] Fetch directo falló; se intentará JSONP.', { sheet: sheetName, requestUrl: url, error: error.message });
     // fetch() normal falló (CORS, red, timeout) — respaldo vía JSONP
-    return fetchSheetJsonp(sheetName, 8000);
+    return fetchSheetJsonp(sheetName, 8000, gid);
   }
 }
 
 // Reintento automático: hasta 3 intentos en total, con breve espera entre cada uno.
-async function fetchSheetWithRetry(sheetName, attempts = 3) {
+async function fetchSheetWithRetry(sheetName, attempts = 3, gid = '') {
   let lastError;
   for (let i = 0; i < attempts; i++) {
     try {
-      return await fetchSheetData(sheetName);
+      return await fetchSheetData(sheetName, gid);
     } catch (err) {
       lastError = err;
       if (i < attempts - 1) {
@@ -290,4 +444,26 @@ export async function fetchEvidencias() {
   }
 
   return list;
+}
+
+export async function fetchCategories() {
+  const sheetName = CATEGORIES_SHEET_NAME.trim().normalize('NFC');
+  const requestUrl = buildSheetUrl(sheetName, null, CATEGORIES_SHEET_GID);
+  const gvizData = await fetchSheetWithRetry(sheetName, 3, CATEGORIES_SHEET_GID);
+  const result = gvizRowsToCategories(gvizData);
+  if (import.meta.env?.DEV) {
+    console.info('[Categories Sheet]', {
+      sheet: sheetName,
+      requestUrl,
+      status: 'ok',
+      columns: gvizData.table.cols.length,
+      rows: gvizData.table.rows.length,
+      normalizedRows: result.categories.length,
+      parseError: null,
+    });
+  }
+  if (import.meta.env?.DEV && result.issues.length > 0) {
+    console.warn('[Categorías] Se descartaron o ajustaron filas inválidas:', result.issues);
+  }
+  return result.categories;
 }

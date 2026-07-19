@@ -192,11 +192,9 @@ html {
 .ba-category-media--vehicle .ba-category-surface::before { background: linear-gradient(120deg, transparent 35%, rgba(215,181,167,.75) 36%, transparent 37%), radial-gradient(circle at 70% 55%, #38516b, #09182b 68%); }
 .ba-category-media--new .ba-category-surface::before { background: radial-gradient(circle at 65% 38%, rgba(255,253,249,.38), transparent 16%), conic-gradient(from 215deg at 65% 50%, #09182b, #a96954, #d7b5a7, #10243e, #09182b); }
 .ba-category-image-wrap, .ba-category-image { height: 100%; inset: 0; position: absolute; width: 100%; }
-.ba-category-image { transform: translate3d(var(--media-x, 0), var(--media-y, 0), 0) scale(1.015); transition: transform var(--ba-motion-editorial) var(--ba-ease-soft); }
+.ba-category-image { object-position: var(--category-image-position, center); transform: translate3d(var(--media-x, 0), var(--media-y, 0), 0) scale(1.015); transition: transform var(--ba-motion-editorial) var(--ba-ease-soft); }
 .ba-category-media:hover .ba-category-image { transform: translate3d(var(--media-x, 0), var(--media-y, 0), 0) scale(1.045); }
 .ba-category-shade { background: linear-gradient(180deg, transparent 50%, rgba(9,24,43,.48)); inset: 0; position: absolute; }
-.ba-category-orbit { border: 1px solid rgba(255,255,255,.28); border-radius: 50%; height: min(38vw, 460px); position: absolute; right: -5%; top: 50%; transform: translateY(-50%); width: min(38vw, 460px); }
-.ba-category-monogram { bottom: 8%; color: rgba(255,255,255,.14); font-size: clamp(7rem, 16vw, 14rem); line-height: .7; position: absolute; right: 4%; }
 .ba-category-band { align-items: center; backdrop-filter: blur(12px); background: rgba(247,243,236,.88); bottom: 0; color: var(--ba-navy-deep); display: flex; font-size: .69rem; font-weight: 800; justify-content: center; left: 0; letter-spacing: .18em; min-height: 3.6rem; position: absolute; right: 0; text-transform: uppercase; transform: translateY(102%); transition: transform var(--ba-motion-standard) var(--ba-ease-editorial); }
 .ba-category-media:hover .ba-category-band, .ba-category-media:focus-visible .ba-category-band { transform: translateY(0); }
 .ba-category-copy { align-self: stretch; display: flex; flex-direction: column; justify-content: space-between; padding: clamp(.5rem, 3vh, 2.5rem) 0; position: relative; }
@@ -297,7 +295,6 @@ html {
   .ba-category-media { align-self: auto; aspect-ratio: 4 / 3; min-height: auto; order: 1; width: 100%; }
   .ba-category-copy { gap: 1.5rem; order: 2; padding: 0; width: 100%; }
   .ba-category-title { font-size: clamp(2.75rem, 9vw, 4.75rem); max-width: 12ch; }
-  .ba-category-orbit { height: min(70vw, 420px); width: min(70vw, 420px); }
   .ba-testimonials, .ba-testimonials--four, .ba-testimonials--3, .ba-testimonials--2, .ba-testimonials--1 { min-height: auto; }
   .ba-testimonials-scene, .ba-testimonials--1 .ba-testimonials-scene { height: auto; min-height: 0; overflow: hidden; padding-bottom: 6rem; padding-top: 6rem; position: relative; }
   .ba-testimonials-frame, .ba-testimonials--1 .ba-testimonials-frame { height: auto; min-height: 0; }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getInitials } from '../data/format';
 import { extractDriveId } from '../domain/image';
 
@@ -15,14 +15,35 @@ import { extractDriveId } from '../domain/image';
  *   2) uc?export=view&id=... (variante alterna, distinto detrás de escenas)
  *   3) iniciales del nombre, con el mismo estilo en toda la app
  */
-export default function ProductImage({ src, alt, className, fallbackClassName, fallbackTextClassName, absolute = false }) {
-  const [stage, setStage] = useState(0); // 0 = src original, 1 = variante alterna, 2 = iniciales
+export default function ProductImage({
+  src,
+  fallbackSrc = '',
+  alt,
+  className,
+  fallbackClassName,
+  fallbackTextClassName,
+  absolute = false,
+}) {
+  const candidates = useMemo(() => {
+    const urls = [src, fallbackSrc].flatMap((url) => {
+      if (!url) return [];
+      const driveId = extractDriveId(url);
+      return driveId ? [url, `https://drive.google.com/uc?export=view&id=${driveId}`] : [url];
+    });
+    return [...new Set(urls.filter(Boolean))];
+  }, [src, fallbackSrc]);
+  const [stage, setStage] = useState(0);
 
-  const driveId = extractDriveId(src);
-  const altUrl = driveId ? `https://drive.google.com/uc?export=view&id=${driveId}` : null;
+  useEffect(() => setStage(0), [src, fallbackSrc]);
 
-  const currentSrc = stage === 0 ? src : stage === 1 && altUrl ? altUrl : null;
-  const showFallback = !src || stage >= 2 || !currentSrc;
+  const currentSrc = candidates[stage] || null;
+  const showFallback = !currentSrc;
+  const handleError = () => {
+    if (import.meta.env.DEV && stage === 0 && src) {
+      console.warn(`[Imagen] No se pudo cargar la imagen principal de "${alt}". Se intentará el fallback.`);
+    }
+    setStage((current) => current + 1);
+  };
 
   if (absolute) {
     // Ambos nodos se renderizan superpuestos en el mismo contenedor padre
@@ -35,7 +56,7 @@ export default function ProductImage({ src, alt, className, fallbackClassName, f
             alt={alt}
             loading="lazy"
             className={className}
-            onError={() => setStage((s) => s + 1)}
+            onError={handleError}
             style={{ display: showFallback ? 'none' : undefined }}
           />
         )}
@@ -60,7 +81,7 @@ export default function ProductImage({ src, alt, className, fallbackClassName, f
       alt={alt}
       loading="lazy"
       className={className}
-      onError={() => setStage((s) => s + 1)}
+      onError={handleError}
     />
   );
 }
