@@ -186,10 +186,11 @@ html {
 .ba-category-panels { inset: 0; position: absolute; }
 .ba-category-panel { align-items: center; display: grid; gap: clamp(2.5rem, 5vw, 7rem); grid-template-columns: minmax(0, 1.55fr) minmax(300px, .9fr); inset: 0; padding: clamp(7.5rem, 12vh, 9rem) clamp(2rem, 4vw, 5rem) clamp(2rem, 4vh, 3.5rem); position: absolute; }
 .ba-category-media { align-self: stretch; background: #142a42; border-radius: clamp(1.25rem, 2vw, 2rem); box-shadow: 0 32px 80px rgba(0,0,0,.28); isolation: isolate; min-height: 0; overflow: hidden; position: relative; }
-.ba-category-media::before { background: radial-gradient(circle at 70% 35%, rgba(215,181,167,.55), transparent 22%), linear-gradient(135deg, #183552, #09182b 75%); content: ''; inset: 0; position: absolute; }
-.ba-category-media--home::before { background: radial-gradient(circle at 35% 65%, rgba(255,253,249,.25), transparent 22%), linear-gradient(145deg, #8a604f, #172b42 70%); }
-.ba-category-media--vehicle::before { background: linear-gradient(120deg, transparent 35%, rgba(215,181,167,.75) 36%, transparent 37%), radial-gradient(circle at 70% 55%, #38516b, #09182b 68%); }
-.ba-category-media--new::before { background: radial-gradient(circle at 65% 38%, rgba(255,253,249,.38), transparent 16%), conic-gradient(from 215deg at 65% 50%, #09182b, #a96954, #d7b5a7, #10243e, #09182b); }
+.ba-category-surface { inset: 0; isolation: isolate; overflow: hidden; position: absolute; }
+.ba-category-surface::before { background: radial-gradient(circle at 70% 35%, rgba(215,181,167,.55), transparent 22%), linear-gradient(135deg, #183552, #09182b 75%); content: ''; inset: 0; position: absolute; }
+.ba-category-media--home .ba-category-surface::before { background: radial-gradient(circle at 35% 65%, rgba(255,253,249,.25), transparent 22%), linear-gradient(145deg, #8a604f, #172b42 70%); }
+.ba-category-media--vehicle .ba-category-surface::before { background: linear-gradient(120deg, transparent 35%, rgba(215,181,167,.75) 36%, transparent 37%), radial-gradient(circle at 70% 55%, #38516b, #09182b 68%); }
+.ba-category-media--new .ba-category-surface::before { background: radial-gradient(circle at 65% 38%, rgba(255,253,249,.38), transparent 16%), conic-gradient(from 215deg at 65% 50%, #09182b, #a96954, #d7b5a7, #10243e, #09182b); }
 .ba-category-image-wrap, .ba-category-image { height: 100%; inset: 0; position: absolute; width: 100%; }
 .ba-category-image { transform: translate3d(var(--media-x, 0), var(--media-y, 0), 0) scale(1.015); transition: transform var(--ba-motion-editorial) var(--ba-ease-soft); }
 .ba-category-media:hover .ba-category-image { transform: translate3d(var(--media-x, 0), var(--media-y, 0), 0) scale(1.045); }

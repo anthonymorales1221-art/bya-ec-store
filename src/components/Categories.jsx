@@ -9,12 +9,27 @@ gsap.registerPlugin(ScrollTrigger);
 
 // CONFIGURACIÓN DE VELOCIDAD DE LA SECCIÓN DE CATEGORÍAS
 // Solo escritorio: aumenta desktopScrollPerCategory para ir más lento y redúcelo para ir más rápido.
-// scrubSmoothing agrega suavidad/retraso; no modifica la distancia total del recorrido.
 const CATEGORY_SCROLL_SETTINGS = {
   desktopScrollPerCategory: 10, // Distancia en svh asignada a cada categoría.
   introScrollDistance: 81, // Distancia en svh reservada para la introducción.
-  scrubSmoothing: 1.1,
   minimumScrollDistance: 320, // Distancia mínima total en svh.
+};
+
+// CONFIGURACIÓN DE VELOCIDAD DE TRANSICIÓN ENTRE CATEGORÍAS
+// Para ralentizar imágenes aumenta imageRevealShare; para más lectura aumenta activeHoldShare.
+// panelOverlapShare prolonga la coexistencia; scrubSmoothing solo agrega amortiguación.
+const CATEGORY_MOTION_TIMING = {
+  timelineStart: 1,
+  timelineEnd: 10,
+  imageRevealShare: 0.44,
+  outgoingImageShare: 0.36,
+  textEnterDelay: 0.56,
+  textEnterShare: 0.24,
+  textStaggerShare: 0.035,
+  activeHoldShare: 0.38,
+  textExitShare: 0.13,
+  panelOverlapShare: 0.34,
+  scrubSmoothing: 1.1,
 };
 
 const PRESENTATION_CATEGORIES = [
@@ -44,12 +59,18 @@ const PRESENTATION_CATEGORIES = [
   },
 ];
 
-const PANEL_WINDOWS = [
-  { start: 1, end: 3.5 },
-  { start: 2.9, end: 5.7 },
-  { start: 5.1, end: 7.9 },
-  { start: 7.3, end: 10 },
-];
+function createPanelWindows(panelCount) {
+  if (!panelCount) return [];
+  const { timelineStart, timelineEnd, panelOverlapShare } = CATEGORY_MOTION_TIMING;
+  const availableDuration = timelineEnd - timelineStart;
+  const panelDuration = availableDuration / (panelCount - (panelCount - 1) * panelOverlapShare);
+  const panelStep = panelDuration * (1 - panelOverlapShare);
+
+  return Array.from({ length: panelCount }, (_, index) => ({
+    start: timelineStart + index * panelStep,
+    end: Math.min(timelineEnd, timelineStart + index * panelStep + panelDuration),
+  }));
+}
 
 function curateCategories(products) {
   return PRESENTATION_CATEGORIES.map((presentation) => {
@@ -74,6 +95,7 @@ export default function Categories() {
   const stageRef = useRef(null);
   const counterRef = useRef(null);
   const categories = useMemo(() => curateCategories(products), [products]);
+  const panelWindows = useMemo(() => createPanelWindows(categories.length), [categories.length]);
   const desktopScrollDistance = Math.max(
     CATEGORY_SCROLL_SETTINGS.minimumScrollDistance,
     CATEGORY_SCROLL_SETTINGS.introScrollDistance
@@ -115,12 +137,15 @@ export default function Categories() {
 
       panels.forEach((panel, index) => {
         const media = panel.querySelector('[data-category-media]');
+        const surface = panel.querySelector('[data-category-surface]');
         const image = panel.querySelector('[data-category-image]');
         const copy = panel.querySelectorAll('[data-category-copy]');
         gsap.set(panel, { zIndex: index + 2 });
-        gsap.set(media, { clipPath: 'inset(100% 0 0 0)', yPercent: 38, scale: 1.045 });
+        gsap.set(media, { clipPath: 'inset(100% 0 0 0)' });
+        gsap.set(surface, { yPercent: 100, scale: 1.05 });
         gsap.set(image, { scale: 1.035, yPercent: 2 });
         gsap.set(copy, { autoAlpha: 0, y: 34 });
+        gsap.set(panel.querySelector('[data-category-depth]'), { autoAlpha: 0 });
       });
 
       const timeline = gsap.timeline({
@@ -129,13 +154,13 @@ export default function Categories() {
           trigger: section,
           start: 'top top',
           end: 'bottom bottom',
-          scrub: CATEGORY_SCROLL_SETTINGS.scrubSmoothing,
+          scrub: CATEGORY_MOTION_TIMING.scrubSmoothing,
           invalidateOnRefresh: true,
           onUpdate: ({ progress }) => {
             stage.style.setProperty('--category-progress', progress);
             if (!counterRef.current) return;
             const playhead = progress * 10;
-            const active = PANEL_WINDOWS.reduce(
+            const active = panelWindows.reduce(
               (current, window, index) => (playhead >= window.start ? index : current),
               0,
             );
@@ -151,53 +176,96 @@ export default function Categories() {
         .to(label, { autoAlpha: 1, y: 0, duration: 0.35 }, 1.02);
 
       panels.forEach((panel, index) => {
-        const { start, end } = PANEL_WINDOWS[index];
+        const { start, end } = panelWindows[index];
         const duration = end - start;
         const media = panel.querySelector('[data-category-media]');
+        const surface = panel.querySelector('[data-category-surface]');
         const image = panel.querySelector('[data-category-image]');
         const copy = panel.querySelectorAll('[data-category-copy]');
+        const depthOverlay = panel.querySelector('[data-category-depth]');
+        const revealDuration = duration * CATEGORY_MOTION_TIMING.imageRevealShare;
+        const textEnterStart = start + revealDuration * CATEGORY_MOTION_TIMING.textEnterDelay;
 
         timeline
           .set(panel, { autoAlpha: 1 }, start)
           .to(media, {
             clipPath: 'inset(0% 0 0 0)',
+            duration: revealDuration,
+            ease: 'none',
+          }, start)
+          .to(surface, {
             yPercent: 0,
             scale: 1,
-            duration: duration * 0.3,
+            duration: revealDuration,
+            ease: 'none',
           }, start)
-          .to(image, { scale: 1, yPercent: 0, duration: duration * 0.38 }, start)
+          .to(image, {
+            scale: 1,
+            yPercent: 0,
+            duration: revealDuration,
+            ease: 'none',
+          }, start)
           .to(copy, {
             autoAlpha: 1,
             y: 0,
-            duration: duration * 0.22,
-            stagger: duration * 0.035,
-          }, start + duration * 0.13);
+            duration: duration * CATEGORY_MOTION_TIMING.textEnterShare,
+            stagger: duration * CATEGORY_MOTION_TIMING.textStaggerShare,
+            ease: 'power3.out',
+          }, textEnterStart);
 
         if (index < panels.length - 1) {
+          const nextWindow = panelWindows[index + 1];
+          const nextDuration = nextWindow.end - nextWindow.start;
+          const nextRevealDuration = nextDuration * CATEGORY_MOTION_TIMING.imageRevealShare;
+          const nextTextStart = nextWindow.start
+            + nextRevealDuration * CATEGORY_MOTION_TIMING.textEnterDelay;
+          const textExitDuration = duration * CATEGORY_MOTION_TIMING.textExitShare;
+          const holdEnd = start + revealDuration
+            + duration * CATEGORY_MOTION_TIMING.activeHoldShare;
+          const textExitStart = Math.min(nextTextStart - textExitDuration, holdEnd);
+          const overlapDuration = Math.min(
+            duration * CATEGORY_MOTION_TIMING.outgoingImageShare,
+            nextDuration * CATEGORY_MOTION_TIMING.panelOverlapShare,
+          );
+
           timeline
             .to(copy, {
               autoAlpha: 0,
               y: -24,
-              duration: duration * 0.2,
-              stagger: duration * 0.02,
-            }, end - duration * 0.25)
-            .to(media, {
-              autoAlpha: 0.34,
+              duration: textExitDuration,
+              stagger: {
+                each: duration * CATEGORY_MOTION_TIMING.textStaggerShare,
+                from: 'end',
+              },
+              ease: 'power2.in',
+            }, textExitStart)
+            .to(surface, {
               yPercent: -8,
               scale: 0.955,
-              duration: duration * 0.28,
-            }, end - duration * 0.28)
-            .set(panel, { autoAlpha: 0 }, end);
+              duration: overlapDuration,
+              ease: 'none',
+            }, nextWindow.start)
+            .to(media, {
+              autoAlpha: 0.34,
+              duration: overlapDuration,
+              ease: 'none',
+            }, nextWindow.start)
+            .to(depthOverlay, {
+              autoAlpha: 0.68,
+              duration: overlapDuration,
+              ease: 'none',
+            }, nextWindow.start)
+            .set(panel, { autoAlpha: 0 }, nextWindow.start + overlapDuration);
         }
       });
 
-      timeline.to({}, { duration: 0.01 }, 10);
+      timeline.to({}, { duration: 0.01 }, CATEGORY_MOTION_TIMING.timelineEnd);
 
       document.fonts?.ready.then(() => ScrollTrigger.refresh());
     }, section);
 
     return () => context.revert();
-  }, [catalogStatus, categories]);
+  }, [catalogStatus, categories, panelWindows]);
 
   if (catalogStatus === 'error') return null;
 
@@ -247,23 +315,30 @@ export default function Categories() {
                   onPointerMove={handleMediaPointerMove}
                   onPointerLeave={resetMediaPointer}
                 >
-                  {category.image && (
-                    <span className="ba-category-image-wrap" data-category-image>
-                      <ProductImage
-                        absolute
-                        src={category.image}
-                        alt={`Selección de ${category.title}`}
-                        className="ba-category-image h-full w-full object-cover"
-                        fallbackClassName="hidden"
-                      />
+                  <span className="ba-category-surface" data-category-surface>
+                    {category.image && (
+                      <span className="ba-category-image-wrap" data-category-image>
+                        <ProductImage
+                          absolute
+                          src={category.image}
+                          alt={`Selección de ${category.title}`}
+                          className="ba-category-image h-full w-full object-cover"
+                          fallbackClassName="hidden"
+                        />
+                      </span>
+                    )}
+                    <span className="ba-category-orbit" aria-hidden="true" />
+                    <span className="ba-category-monogram font-display" aria-hidden="true">
+                      {String(index + 1).padStart(2, '0')}
                     </span>
-                  )}
-                  <span className="ba-category-orbit" aria-hidden="true" />
-                  <span className="ba-category-monogram font-display" aria-hidden="true">
-                    {String(index + 1).padStart(2, '0')}
+                    <span className="ba-category-shade" aria-hidden="true" />
+                    <span
+                      className="pointer-events-none absolute inset-0 bg-[var(--ba-navy-deep)]"
+                      data-category-depth
+                      aria-hidden="true"
+                    />
+                    <span className="ba-category-band" aria-hidden="true">Ver categoría</span>
                   </span>
-                  <span className="ba-category-shade" aria-hidden="true" />
-                  <span className="ba-category-band" aria-hidden="true">Ver categoría</span>
                 </Link>
 
                 <div className="ba-category-copy">
