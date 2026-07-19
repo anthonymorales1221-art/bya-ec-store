@@ -2,11 +2,12 @@ import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../hooks/useCart';
 import { useElementScrollProgress, usePointerMotion } from '../hooks/useLandingMotion';
+import AnimatedEyebrow from './AnimatedEyebrow';
 
 const TRUST_ITEMS = [
   'Envíos a todo Ecuador',
   'Atención personalizada',
-  'Compra rápida por WhatsApp',
+  'Nuevos productos constantemente',
 ];
 
 export default function Hero() {
@@ -26,15 +27,13 @@ export default function Hero() {
 
       <div className="relative z-10 mx-auto flex min-h-[clamp(700px,96svh,1040px)] w-full max-w-[1240px] items-center px-5 py-20 sm:px-8 lg:px-10">
         <div className="ba-hero-content w-full max-w-[900px] pt-4 sm:pt-8">
-          <p className="ba-hero-enter mb-5 text-[0.7rem] font-extrabold uppercase tracking-[0.22em] text-[var(--ba-copper)] sm:text-xs">
-            Boutique multirrubro · Ecuador
-          </p>
+          <AnimatedEyebrow className="ba-hero-enter mb-5">Importadora multirrubro · Ecuador</AnimatedEyebrow>
           <h1 id="hero-title" className="ba-hero-title max-w-[920px] font-display font-medium leading-[0.91] tracking-[-0.055em] text-[var(--ba-navy-deep)]">
-            <span className="ba-hero-line"><span>Productos que</span></span>
-            <span className="ba-hero-line ba-hero-line--accent"><span>elevan tu día a día</span></span>
+            <span className="ba-hero-line"><span>Siempre hay algo</span></span>
+            <span className="ba-hero-line ba-hero-line--accent"><span>nuevo por descubrir.</span></span>
           </h1>
           <p className="ba-hero-enter ba-hero-delay-2 mt-6 max-w-[590px] text-base leading-7 text-[var(--ba-muted)] sm:text-lg sm:leading-8">
-            Belleza, hogar y accesorios para vehículo seleccionados para ti, con atención personalizada y envíos a todo Ecuador.
+            Una selección cambiante de productos útiles, modernos y pensados para distintos momentos de tu vida, con envíos a todo Ecuador.
           </p>
 
           <div className="ba-hero-enter ba-hero-delay-3 mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">

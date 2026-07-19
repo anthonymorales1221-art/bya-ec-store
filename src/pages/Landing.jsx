@@ -13,6 +13,7 @@ import PremiumFaq from '../components/PremiumFaq';
 import ImmersiveCTA from '../components/ImmersiveCTA';
 import PremiumCursor from '../components/PremiumCursor';
 import TitleRevealManager from '../components/TitleRevealManager';
+import ScrollStatement from '../components/ScrollStatement';
 import { useScrollAnimationsCleanup } from '../hooks/useScrollAnimations';
 
 export default function Landing() {
@@ -30,6 +31,7 @@ export default function Landing() {
       <TitleRevealManager />
       <Hero />
       <TrustStrip />
+      <section className="ba-statement-panel px-5 py-20 sm:px-8 sm:py-28 lg:px-10"><div className="mx-auto max-w-[1240px]"><ScrollStatement>Seleccionamos posibilidades, no limitamos categorías.</ScrollStatement></div></section>
       <Categories />
       <StorySection />
       <FeaturedProducts />

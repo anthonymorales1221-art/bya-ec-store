@@ -36,7 +36,7 @@ export function validateProducts(products) {
 }
 
 export function validateTestimonials(testimonials) {
-  return testimonials.filter((item) => item.nombre && item.texto && isWebUrl(item.foto_url));
+  return testimonials.filter((item) => item.nombre && item.texto && (!item.foto_url || isWebUrl(item.foto_url)));
 }
 
 export function validateEvidencias(evidencias) {

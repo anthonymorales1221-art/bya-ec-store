@@ -52,8 +52,8 @@ export default function FeaturedProducts() {
       const rect = card.getBoundingClientRect();
       const x = (event.clientX - rect.left) / rect.width - 0.5;
       const y = (event.clientY - rect.top) / rect.height - 0.5;
-      card.style.setProperty('--tilt-x', `${y * -4}deg`);
-      card.style.setProperty('--tilt-y', `${x * 4}deg`);
+      card.style.setProperty('--tilt-x', `${y * -3}deg`);
+      card.style.setProperty('--tilt-y', `${x * 3}deg`);
       card.style.setProperty('--glow-x', `${(x + 0.5) * 100}%`);
       card.style.setProperty('--glow-y', `${(y + 0.5) * 100}%`);
     };

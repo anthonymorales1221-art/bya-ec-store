@@ -1,32 +1,88 @@
-import { useReducedMotion } from '../hooks/useLandingMotion';
+import { useLayoutEffect, useMemo, useRef } from 'react';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useCart } from '../hooks/useCart';
 import ProductImage from './ProductImage';
+import RevealTitle from './RevealTitle';
+import AnimatedEyebrow from './AnimatedEyebrow';
 
-function TestimonialCard({ item }) {
+gsap.registerPlugin(ScrollTrigger);
+
+function TestimonialCard({ item, index }) {
   return (
-    <article className="w-[82vw] max-w-[400px] shrink-0 rounded-[24px] border border-[var(--ba-border)] bg-[var(--ba-warm-white)] p-7 transition duration-200 hover:-translate-y-0.5 focus-within:border-[var(--ba-copper-soft)] sm:w-[390px]">
-      <span className="font-display text-5xl leading-none text-[var(--ba-copper-soft)]" aria-hidden="true">“</span>
-      <blockquote className="mt-2 text-base leading-7 text-[var(--ba-graphite)]">{item.texto}</blockquote>
-      <div className="mt-7 flex items-center gap-3"><ProductImage src={item.foto_url} alt={item.nombre} className="h-11 w-11 rounded-full object-cover" fallbackClassName="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--ba-navy)] font-bold text-white" /><div><cite className="not-italic text-sm font-extrabold text-[var(--ba-navy-deep)]">{item.nombre}</cite><span className="block text-xs text-[var(--ba-muted)]">Cliente B&A.EC Store</span></div></div>
+    <article className={`ba-testimonial-card ba-testimonial-card--${index + 1}`} data-testimonial-card data-cursor="LEER">
+      <div className="ba-testimonial-quote">
+        <span className="font-display text-5xl leading-none text-[var(--ba-copper-soft)]" aria-hidden="true">“</span>
+        <blockquote className="mt-2 text-lg leading-8 text-white/88 sm:text-xl">{item.texto}</blockquote>
+      </div>
+      <div className="ba-testimonial-identity">
+        <ProductImage src={item.foto_url} alt={item.nombre} className="h-12 w-12 rounded-full object-cover" fallbackClassName="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--ba-copper)] font-bold text-white" fallbackTextClassName="text-xs" />
+        <div><cite className="not-italic text-sm font-extrabold text-white">{item.nombre}</cite><span className="block text-xs text-white/48">Cliente B&A.EC Store</span></div>
+      </div>
     </article>
   );
 }
 
-function MarqueeRow({ items, reverse = false }) {
-  return <div className={`ba-testimonial-row flex w-max gap-5 ${reverse ? 'ba-marquee-reverse' : ''}`}>{items.map((item, index) => <TestimonialCard key={`a-${item.nombre}-${index}`} item={item} />)}<div aria-hidden="true" className="flex gap-5">{items.map((item, index) => <TestimonialCard key={`b-${item.nombre}-${index}`} item={item} />)}</div></div>;
-}
-
 export default function Testimonials() {
   const { testimonials, testimonialsStatus } = useCart();
-  const reduced = useReducedMotion();
-  if (testimonialsStatus !== 'ready' || testimonials.length === 0) return null;
-  const animated = testimonials.length >= 6 && !reduced;
-  const half = Math.ceil(testimonials.length / 2);
+  const sectionRef = useRef(null);
+  const sceneRef = useRef(null);
+  const selected = useMemo(() => testimonials.slice(0, 4), [testimonials]);
 
+  useLayoutEffect(() => {
+    const section = sectionRef.current;
+    const scene = sceneRef.current;
+    const enabled = window.matchMedia('(min-width: 1024px) and (prefers-reduced-motion: no-preference)').matches;
+    if (!section || !scene || !selected.length || !enabled) return undefined;
+    const cards = [...scene.querySelectorAll('[data-testimonial-card]')];
+    const context = gsap.context(() => {
+      const timeline = gsap.timeline({
+        scrollTrigger: { trigger: section, start: 'top top', end: 'bottom bottom', scrub: 0.8 },
+      });
+      cards.forEach((card, index) => {
+        const fromLeft = index % 2 === 0;
+        timeline.fromTo(card,
+          { x: fromLeft ? -60 : 60, y: 64, scale: 0.95, rotate: fromLeft ? -0.8 : 0.8, opacity: 0 },
+          { x: 0, y: 0, scale: 1, rotate: 0, opacity: 1, duration: 1, ease: 'expo.out' },
+          index * 0.72);
+        if (index < cards.length - 1) timeline.to(card, { scale: 0.975, opacity: 0.58, duration: 0.65 }, index * 0.72 + 0.8);
+      });
+      timeline.to(scene.querySelector('[data-testimonial-wave]'), { xPercent: 4, yPercent: -3, duration: cards.length }, 0);
+    }, section);
+
+    const move = (event) => {
+      const card = event.target.closest('[data-testimonial-card]');
+      if (!card) return;
+      const rect = card.getBoundingClientRect();
+      const x = (event.clientX - rect.left) / rect.width - 0.5;
+      const y = (event.clientY - rect.top) / rect.height - 0.5;
+      card.style.setProperty('--spot-x', `${(x + 0.5) * 100}%`);
+      card.style.setProperty('--spot-y', `${(y + 0.5) * 100}%`);
+      card.style.setProperty('--testimonial-tilt-x', `${y * -2}deg`);
+      card.style.setProperty('--testimonial-tilt-y', `${x * 2}deg`);
+    };
+    const reset = () => scene.querySelectorAll('[data-testimonial-card]').forEach((card) => {
+      card.style.setProperty('--testimonial-tilt-x', '0deg');
+      card.style.setProperty('--testimonial-tilt-y', '0deg');
+    });
+    scene.addEventListener('pointermove', move, { passive: true });
+    scene.addEventListener('pointerleave', reset);
+    return () => { scene.removeEventListener('pointermove', move); scene.removeEventListener('pointerleave', reset); context.revert(); };
+  }, [selected.length]);
+
+  if (testimonialsStatus !== 'ready' || selected.length === 0) return null;
+  const sceneHeight = selected.length >= 4 ? 'ba-testimonials--long' : selected.length === 3 ? 'ba-testimonials--medium' : 'ba-testimonials--short';
   return (
-    <section id="opiniones" className="overflow-hidden bg-[var(--ba-warm-white)] py-24 sm:py-32">
-      <div className="mx-auto max-w-[1240px] px-5 sm:px-8 lg:px-10"><p className="ba-kicker">Opiniones verificadas</p><h2 className="ba-section-title mt-4">Experiencias reales con B&A</h2></div>
-      {animated ? <div className="mt-14 space-y-5 overflow-hidden py-2"><MarqueeRow items={testimonials.slice(0, half)} /><MarqueeRow items={testimonials.slice(half)} reverse /></div> : <div className="mx-auto mt-14 grid max-w-[1240px] gap-5 px-5 sm:grid-cols-2 sm:px-8 lg:grid-cols-3 lg:px-10">{testimonials.map((item, index) => <TestimonialCard key={`${item.nombre}-${index}`} item={item} />)}</div>}
+    <section ref={sectionRef} id="opiniones" className={`ba-testimonials ba-dark ${sceneHeight}`} data-cursor-tone="light">
+      <div ref={sceneRef} className="ba-testimonials-scene">
+        <div className="ba-testimonial-wave" data-testimonial-wave aria-hidden="true" />
+        <div className="ba-testimonials-heading">
+          <AnimatedEyebrow className="text-[var(--ba-copper-soft)]">Experiencias reales</AnimatedEyebrow>
+          <RevealTitle className="mt-5 font-display text-[clamp(3.2rem,6vw,6.5rem)] font-medium leading-[.95] tracking-[-.045em] text-white" lines={['Lo que dicen quienes', 'ya descubrieron B&A']} />
+          <p className="mt-6 max-w-2xl text-base leading-8 text-white/58">Compras acompañadas, productos seleccionados y entregas que generan confianza.</p>
+        </div>
+        <div className="ba-testimonials-cards">{selected.map((item, index) => <TestimonialCard key={`${item.nombre}-${index}`} item={item} index={index} />)}</div>
+      </div>
     </section>
   );
 }
