@@ -25,6 +25,8 @@ export function usePointerMotion(ref, { maxX = 16, maxY = 12 } = {}) {
       element.style.setProperty('--pointer-y', `${y * maxY}px`);
       element.style.setProperty('--pointer-soft-x', `${x * maxX * 0.55}px`);
       element.style.setProperty('--pointer-soft-y', `${y * maxY * 0.55}px`);
+      element.style.setProperty('--pointer-inverse-x', `${x * maxX * -0.22}px`);
+      element.style.setProperty('--pointer-inverse-y', `${y * maxY * -0.22}px`);
     };
     const move = (event) => {
       const rect = element.getBoundingClientRect();
@@ -61,6 +63,7 @@ export function useElementScrollProgress(ref, variable = '--section-progress') {
         element.style.setProperty('--hero-opacity', String(1 - progress * 0.72));
         element.style.setProperty('--hero-content-scale', String(1 - progress * 0.025));
         element.style.setProperty('--hero-image-scale', String(1.02 + progress * 0.025));
+        element.style.setProperty('--hero-content-y', `${progress * -32}px`);
       }
     };
     const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };

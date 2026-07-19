@@ -11,6 +11,8 @@ import Evidencias from '../components/Evidencias';
 import AfterSales from '../components/AfterSales';
 import PremiumFaq from '../components/PremiumFaq';
 import ImmersiveCTA from '../components/ImmersiveCTA';
+import PremiumCursor from '../components/PremiumCursor';
+import TitleRevealManager from '../components/TitleRevealManager';
 import { useScrollAnimationsCleanup } from '../hooks/useScrollAnimations';
 
 export default function Landing() {
@@ -24,6 +26,8 @@ export default function Landing() {
 
   return (
     <div className="relative">
+      <PremiumCursor />
+      <TitleRevealManager />
       <Hero />
       <TrustStrip />
       <Categories />
