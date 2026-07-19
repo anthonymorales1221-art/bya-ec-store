@@ -7,16 +7,16 @@ import AnimatedEyebrow from './AnimatedEyebrow';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const SLOT_SEQUENCE = {
-  1: ['d'],
+const JOURNEY_SEQUENCE = {
+  1: ['single'],
   2: ['a', 'b'],
   3: ['a', 'b', 'd'],
   4: ['a', 'b', 'c', 'd'],
 };
 
-function TestimonialCard({ item, slot }) {
+function TestimonialCard({ item, journey }) {
   return (
-    <article className={`ba-testimonial-card ba-testimonial-card--${slot}`} data-testimonial-card data-slot={slot} data-cursor="LEER">
+    <article className={`ba-testimonial-card ba-testimonial-card--${journey}`} data-testimonial-card data-journey={journey} data-cursor="LEER">
       <div className="ba-testimonial-quote">
         <span className="font-display text-5xl leading-none text-[var(--ba-copper-soft)]" aria-hidden="true">“</span>
         <blockquote className="mt-2 text-lg leading-8 text-white/88 sm:text-xl">{item.texto}</blockquote>
@@ -34,7 +34,7 @@ export default function Testimonials() {
   const sectionRef = useRef(null);
   const sceneRef = useRef(null);
   const selected = useMemo(() => testimonials.slice(0, 4), [testimonials]);
-  const slots = SLOT_SEQUENCE[selected.length] || SLOT_SEQUENCE[4];
+  const journeys = JOURNEY_SEQUENCE[selected.length] || JOURNEY_SEQUENCE[4];
 
   useEffect(() => {
     if (testimonialsStatus !== 'ready' || selected.length === 0 || window.location.hash !== '#opiniones') return undefined;
@@ -45,49 +45,92 @@ export default function Testimonials() {
   useLayoutEffect(() => {
     const section = sectionRef.current;
     const scene = sceneRef.current;
-    const enabled = window.matchMedia('(min-width: 1280px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)').matches;
+    const enabled = window.matchMedia('(min-width: 900px) and (prefers-reduced-motion: no-preference)').matches;
     if (!section || !scene || selected.length < 2 || !enabled) return undefined;
 
-    const card = (slot) => scene.querySelector(`[data-slot="${slot}"]`);
+    const card = (journey) => scene.querySelector(`[data-journey="${journey}"]`);
     const cards = [...scene.querySelectorAll('[data-testimonial-card]')];
     const heading = scene.querySelector('[data-testimonial-heading]');
     const subtitle = scene.querySelector('[data-testimonial-subtitle]');
     const pattern = scene.querySelector('[data-testimonial-wave]');
-    const eyebrow = scene.querySelector('[data-testimonial-eyebrow]');
-    const titleLines = scene.querySelectorAll('[data-testimonial-title-line]');
+    let refreshFrame = 0;
 
     const context = gsap.context(() => {
       gsap.set(cards, { autoAlpha: 0 });
+      gsap.set(heading, { xPercent: -50, yPercent: -50, autoAlpha: 0 });
       const timeline = gsap.timeline({
-        defaults: { ease: 'expo.out' },
-        scrollTrigger: { trigger: section, start: 'top top', end: 'bottom bottom', scrub: 0.85 },
+        defaults: { ease: 'none', force3D: true },
+        scrollTrigger: {
+          trigger: section,
+          start: 'top top',
+          end: 'bottom bottom',
+          scrub: 1.3,
+          invalidateOnRefresh: true,
+        },
       });
 
-      timeline
-        .fromTo(pattern, { opacity: 0, y: 24 }, { opacity: 0.12, y: 0, duration: 1.2 }, 0)
-        .fromTo(eyebrow, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.8 }, 0.15)
-        .fromTo(titleLines, { yPercent: 105, opacity: 0, rotate: 1 }, { yPercent: 0, opacity: 1, rotate: 0, stagger: 0.12, duration: 1 }, 0.3)
-        .fromTo(subtitle, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.8 }, 0.65);
+      const journey = (element, start, duration, side) => {
+        if (!element) return;
+        const enterEnd = start + duration * 0.42;
+        const depthEnd = start + duration * 0.84;
+        timeline.fromTo(element, {
+          y: () => window.innerHeight * 0.62 + element.offsetHeight * 0.7,
+          x: side * 16,
+          scale: 0.93,
+          autoAlpha: 0,
+        }, {
+          y: () => -element.offsetHeight * 0.5 + side * window.innerHeight * 0.055,
+          x: 0,
+          scale: 1,
+          autoAlpha: 1,
+          duration: duration * 0.42,
+        }, start)
+          .to(element, {
+            y: () => -window.innerHeight * 0.38 - element.offsetHeight * 0.5,
+            x: side * 8,
+            scale: 0.965,
+            opacity: 0.32,
+            duration: duration * 0.42,
+          }, enterEnd)
+          .to(element, {
+            y: () => -window.innerHeight * 0.62 - element.offsetHeight,
+            x: side * 18,
+            scale: 0.94,
+            autoAlpha: 0,
+            duration: duration * 0.16,
+          }, depthEnd);
+      };
 
-      if (card('a')) timeline.fromTo(card('a'), { x: -54, y: 54, scale: 0.94, rotate: -0.8, autoAlpha: 0 }, { x: 0, y: 0, scale: 1, rotate: 0, autoAlpha: 1, duration: 1.15 }, 2.35);
-      if (card('b')) timeline.fromTo(card('b'), { x: 54, y: 44, scale: 0.95, rotate: 0.8, autoAlpha: 0 }, { x: 0, y: 0, scale: 1, rotate: 0, autoAlpha: 1, duration: 1.1 }, 3.2);
+      timeline.fromTo(pattern, { opacity: 0.04, x: 0, y: 22, scale: 1 }, { opacity: 0.1, x: 12, y: -18, scale: 1.015, duration: 6.8 }, 0)
+        .to(pattern, { opacity: 0.05, x: 24, y: -58, scale: 1.03, duration: 3.2 }, 6.8);
 
-      timeline.to(heading, { scale: 0.87, y: -18, transformOrigin: 'left top', duration: 1.1 }, 4.15)
-        .to(subtitle, { opacity: 0.4, duration: 0.8 }, 4.15);
-      if (card('a')) timeline.to(card('a'), { scale: 0.97, opacity: 0.62, duration: 0.9 }, 4.35);
-      if (card('c')) timeline.fromTo(card('c'), { x: -42, y: 64, scale: 0.95, autoAlpha: 0 }, { x: 0, y: 0, scale: 1, autoAlpha: 1, duration: 1.1 }, 5.25);
-      if (card('d')) timeline.fromTo(card('d'), { x: 42, y: 64, scale: 0.95, rotate: 0.6, autoAlpha: 0 }, { x: 0, y: 0, scale: 1, rotate: 0, autoAlpha: 1, duration: 1.15 }, selected.length === 1 ? 2.4 : 6.2);
-      if (card('b') && card('d')) timeline.to(card('b'), { scale: 0.975, opacity: 0.52, duration: 0.9 }, 6.35);
-      if (card('a')) timeline.to(card('a'), { opacity: 0.18, y: -24, duration: 0.8 }, 7.25);
-      if (card('b') && card('d')) timeline.to(card('b'), { opacity: 0.18, y: -18, duration: 0.8 }, 7.35);
-      timeline.to(heading, { opacity: 0, y: -42, duration: 1 }, 7.55);
-      if (card('c')) timeline.to(card('c'), { scale: 0.975, opacity: 0.42, duration: 0.8 }, 7.65);
-      if (card('d')) timeline.to(card('d'), { scale: 1.025, opacity: 1, duration: 0.8 }, 7.7)
-        .to(card('d'), { y: -28, autoAlpha: 0, scale: 0.98, duration: 1 }, 9.05);
-      else if (card('b')) timeline.to(card('b'), { scale: 1.025, opacity: 1, duration: 0.8 }, 7.7)
-        .to(card('b'), { y: -28, autoAlpha: 0, scale: 0.98, duration: 1 }, 9.05);
-      timeline.to(pattern, { x: 24, y: -18, opacity: 0.06, duration: 2 }, 8.2);
+      journey(card('a'), 0.4, 3.2, -1);
+      journey(card('b'), 1.6, 3.6, 1);
+      journey(card('c'), 3.8, 3.7, -1);
+      journey(card('d'), 5.7, 4.1, 1);
+
+      timeline.fromTo(heading, {
+        y: () => window.innerHeight * 0.9,
+        scale: 0.96,
+        autoAlpha: 0,
+      }, {
+        y: 0,
+        scale: 1,
+        autoAlpha: 1,
+        duration: 1.4,
+      }, 2.4)
+        .to(heading, { y: () => -window.innerHeight * 0.06, scale: 0.99, duration: 2.9 }, 3.8)
+        .to(heading, { y: () => -window.innerHeight * 0.86, scale: 0.95, autoAlpha: 0, duration: 1.8 }, 6.7)
+        .to(subtitle, { opacity: 0.72, duration: 1 }, 5.7);
     }, section);
+
+    const scheduleRefresh = () => {
+      cancelAnimationFrame(refreshFrame);
+      refreshFrame = requestAnimationFrame(() => ScrollTrigger.refresh());
+    };
+    document.fonts?.ready.then(scheduleRefresh);
+    const resizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(scheduleRefresh);
+    resizeObserver?.observe(scene);
 
     const move = (event) => {
       const targetCard = event.target.closest('[data-testimonial-card]');
@@ -106,7 +149,7 @@ export default function Testimonials() {
     });
     scene.addEventListener('pointermove', move, { passive: true });
     scene.addEventListener('pointerleave', reset);
-    return () => { scene.removeEventListener('pointermove', move); scene.removeEventListener('pointerleave', reset); context.revert(); };
+    return () => { cancelAnimationFrame(refreshFrame); resizeObserver?.disconnect(); scene.removeEventListener('pointermove', move); scene.removeEventListener('pointerleave', reset); context.revert(); };
   }, [selected.length]);
 
   if (testimonialsStatus !== 'ready' || selected.length === 0) return null;
@@ -124,7 +167,7 @@ export default function Testimonials() {
             </h2>
             <p data-testimonial-subtitle className="mt-6 max-w-xl text-base leading-8 text-white/58">Compras acompañadas, productos seleccionados y entregas que generan confianza.</p>
           </div>
-          <div className="ba-testimonials-cards">{selected.map((item, index) => <TestimonialCard key={`${item.nombre}-${index}`} item={item} slot={slots[index]} />)}</div>
+          <div className="ba-testimonials-cards">{selected.map((item, index) => <TestimonialCard key={`${item.nombre}-${index}`} item={item} journey={journeys[index]} />)}</div>
         </div>
       </div>
     </section>
