@@ -1,47 +1,62 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { WHATSAPP_NUMBER } from '../data/config';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { CART_STORAGE_KEY, WHATSAPP_NUMBER } from '../data/config';
 import { DELIVERY_METHODS } from '../data/deliveryMethods';
-import { restoreCart, toStoredCart } from '../domain/cart';
+import { hydrateCart, reconcileCart } from '../domain/cart';
 import { useContent } from '../hooks/useContent';
 import { buildWhatsAppOrderMessage, openWhatsApp } from '../services/checkoutService';
-import { loadStoredCart, saveStoredCart } from '../services/cartStorage';
+import { clearStoredCart, loadStoredCart, parseStoredCart, saveStoredCart } from '../services/cartStorage';
 import { CartContext } from './cart-context';
 
 export function CartProvider({ children }) {
   const { products, catalogStatus } = useContent();
-  const [cart, setCart] = useState({});
-  const storedCartRef = useRef(loadStoredCart());
-  const [cartHydrated, setCartHydrated] = useState(false);
+  const [cart, setCart] = useState(() => hydrateCart(loadStoredCart()));
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedDelivery, setSelectedDelivery] = useState(null);
   const [checkoutStep, setCheckoutStep] = useState('cart');
 
   useEffect(() => {
-    if (catalogStatus !== 'ready' || cartHydrated) return;
-    const restored = restoreCart(storedCartRef.current, products);
-    setCart(restored.cart);
-    storedCartRef.current = toStoredCart(restored.cart);
-    setCartHydrated(true);
-    if (restored.changed) saveStoredCart(restored.cart);
-  }, [products, catalogStatus, cartHydrated]);
+    if (catalogStatus !== 'ready') return;
+    setCart((previous) => reconcileCart(previous, products));
+  }, [products, catalogStatus]);
 
   useEffect(() => {
-    if (cartHydrated) saveStoredCart(cart);
-  }, [cart, cartHydrated]);
+    const handleStorage = (event) => {
+      if (event.key !== CART_STORAGE_KEY) return;
+      if (event.newValue === null) {
+        setCart({});
+        return;
+      }
+      const { payload } = parseStoredCart(event.newValue);
+      if (payload) {
+        const incoming = hydrateCart(payload);
+        setCart(catalogStatus === 'ready' ? reconcileCart(incoming, products) : incoming);
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [catalogStatus, products]);
+
+  const mutateCart = useCallback((updater) => {
+    setCart((previous) => {
+      const next = updater(previous);
+      if (next !== previous) saveStoredCart(next);
+      return next;
+    });
+  }, []);
 
   const addToCart = useCallback((sku) => {
-    setCart((previous) => {
+    mutateCart((previous) => {
       const product = products.find((item) => item.sku === sku);
       if (!product || product.stock <= 0) return previous;
       const existing = previous[sku];
-      if (!existing) return { ...previous, [sku]: { product, qty: 1 } };
+      if (!existing) return { ...previous, [sku]: { product, qty: 1, availability: 'available' } };
       if (existing.qty >= product.stock) return previous;
-      return { ...previous, [sku]: { ...existing, product, qty: existing.qty + 1 } };
+      return { ...previous, [sku]: { ...existing, product, qty: existing.qty + 1, availability: 'available' } };
     });
-  }, [products]);
+  }, [mutateCart, products]);
 
   const changeQty = useCallback((sku, delta) => {
-    setCart((previous) => {
+    mutateCart((previous) => {
       const existing = previous[sku];
       if (!existing) return previous;
       const nextQty = existing.qty + delta;
@@ -50,24 +65,37 @@ export function CartProvider({ children }) {
         delete next[sku];
         return next;
       }
-      return { ...previous, [sku]: { ...existing, qty: Math.min(nextQty, existing.product.stock) } };
+      if (delta > 0 && (existing.product.stock <= 0 || nextQty > existing.product.stock)) return previous;
+      const availability = existing.product.stock > 0 && nextQty <= existing.product.stock
+        ? 'available'
+        : existing.availability;
+      return { ...previous, [sku]: { ...existing, qty: nextQty, availability } };
     });
-  }, []);
+  }, [mutateCart]);
 
   const removeFromCart = useCallback((sku) => {
-    setCart((previous) => {
+    mutateCart((previous) => {
+      if (!previous[sku]) return previous;
       const next = { ...previous };
       delete next[sku];
       return next;
     });
+  }, [mutateCart]);
+  const clearCart = useCallback(() => {
+    setCart({});
+    clearStoredCart();
   }, []);
-  const clearCart = useCallback(() => setCart({}), []);
 
   const cartItems = useMemo(() => Object.values(cart), [cart]);
   const cartCount = useMemo(() => cartItems.reduce((sum, item) => sum + item.qty, 0), [cartItems]);
-  const cartSubtotal = useMemo(
-    () => cartItems.reduce((sum, item) => sum + item.qty * item.product.price, 0),
+  const validCartItems = useMemo(
+    () => cartItems.filter((item) => item.availability === 'available'),
     [cartItems]
+  );
+  const cartHasIssues = validCartItems.length !== cartItems.length;
+  const cartSubtotal = useMemo(
+    () => validCartItems.reduce((sum, item) => sum + item.qty * item.product.price, 0),
+    [validCartItems]
   );
   const selectedMethod = useMemo(
     () => DELIVERY_METHODS.find((method) => method.value === selectedDelivery) || null,
@@ -82,16 +110,17 @@ export function CartProvider({ children }) {
   }, []);
   const closeCart = useCallback(() => setIsCartOpen(false), []);
   const goToCheckoutStep = useCallback(() => {
-    if (cartItems.length > 0) setCheckoutStep('checkout');
-  }, [cartItems.length]);
+    if (cartItems.length > 0 && !cartHasIssues) setCheckoutStep('checkout');
+  }, [cartItems.length, cartHasIssues]);
   const goToCartStep = useCallback(() => setCheckoutStep('cart'), []);
 
   const confirmOrder = useCallback((customer) => {
+    if (cartHasIssues) return;
     const message = buildWhatsAppOrderMessage({
-      cartItems, cartSubtotal, shippingCost, method: selectedMethod, customer,
+      cartItems: validCartItems, cartSubtotal, shippingCost, method: selectedMethod, customer,
     });
     if (message) openWhatsApp(WHATSAPP_NUMBER, message);
-  }, [cartItems, cartSubtotal, shippingCost, selectedMethod]);
+  }, [validCartItems, cartSubtotal, shippingCost, selectedMethod, cartHasIssues]);
 
   const contactWhatsAppForHelp = useCallback((message) => {
     const humanMessage = typeof message === 'string'
@@ -101,12 +130,12 @@ export function CartProvider({ children }) {
   }, []);
 
   const value = useMemo(() => ({
-    cart, cartItems, cartCount, cartSubtotal, cartTotal, shippingCost,
+    cart, cartItems, cartCount, cartSubtotal, cartTotal, shippingCost, cartHasIssues,
     addToCart, changeQty, removeFromCart, clearCart,
     isCartOpen, openCart, closeCart, checkoutStep, goToCheckoutStep, goToCartStep,
     selectedDelivery, setSelectedDelivery, selectedMethod, confirmOrder, contactWhatsAppForHelp,
   }), [
-    cart, cartItems, cartCount, cartSubtotal, cartTotal, shippingCost,
+    cart, cartItems, cartCount, cartSubtotal, cartTotal, shippingCost, cartHasIssues,
     addToCart, changeQty, removeFromCart, clearCart, isCartOpen, openCart, closeCart,
     checkoutStep, goToCheckoutStep, goToCartStep, selectedDelivery, selectedMethod,
     confirmOrder, contactWhatsAppForHelp,

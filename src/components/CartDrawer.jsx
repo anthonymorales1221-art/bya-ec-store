@@ -60,6 +60,14 @@ function CartStep() {
           <div className="flex-1 min-w-0">
             <div className="font-semibold text-sm leading-snug truncate">{item.product.name}</div>
             <div className="text-xs text-ink-soft mb-2">SKU {item.product.sku}</div>
+            {item.availability !== 'available' && (
+              <p className="mb-2 text-xs font-semibold text-[var(--ba-copper)]">
+                {item.availability === 'pending' && 'Validando disponibilidad…'}
+                {item.availability === 'out-of-stock' && 'Actualmente sin stock'}
+                {item.availability === 'insufficient-stock' && `Solo hay ${item.product.stock} disponibles`}
+                {item.availability === 'unavailable' && 'Producto no disponible'}
+              </p>
+            )}
             <QtyControl sku={item.product.sku} qty={item.qty} onChange={changeQty} />
           </div>
           <div className="flex flex-col items-end gap-2">
@@ -109,7 +117,7 @@ function CostBreakdown() {
 }
 
 export default function CartDrawer() {
-  const { isCartOpen, closeCart, checkoutStep, goToCheckoutStep, goToCartStep, cartItems } = useCart();
+  const { isCartOpen, closeCart, checkoutStep, goToCheckoutStep, goToCartStep, cartItems, cartHasIssues } = useCart();
 
   return (
     <AnimatePresence>
@@ -166,7 +174,7 @@ export default function CartDrawer() {
               {checkoutStep === 'cart' ? (
                 <button
                   type="button"
-                  disabled={cartItems.length === 0}
+                  disabled={cartItems.length === 0 || cartHasIssues}
                   onClick={goToCheckoutStep}
                   className="w-full mt-4 bg-ink text-cream rounded-full py-3.5 font-bold text-sm hover:bg-[#1c1c1e] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >

@@ -6,7 +6,9 @@ export const SHEET_NAME = 'Productos';
 export const TESTIMONIOS_SHEET_NAME = 'Testimonios';
 export const EVIDENCIAS_SHEET_NAME = 'Evidencias';
 
-export const CART_STORAGE_KEY = 'bya_cart_v1';
+export const CART_STORAGE_KEY = 'byaec.cart.v1';
+export const CART_STORAGE_VERSION = 1;
+export const CART_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 export const GRID_BATCH_SIZE = 24;
 
