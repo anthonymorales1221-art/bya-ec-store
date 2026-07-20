@@ -1,6 +1,4 @@
 import {
-  CATEGORIES_SHEET_NAME,
-  CATEGORIES_SHEET_GID,
   EVIDENCIAS_SHEET_NAME,
   SHEET_ID,
   SHEET_NAME,
@@ -183,19 +181,19 @@ function gvizRowsToTestimonials(gvizData) {
     .filter((t) => t.nombre && t.texto && t.activo);
 }
 
-export function gvizRowsToCategories(gvizData) {
+export function gvizRowsToProductCategories(gvizData) {
   const table = inferTableHeaders(gvizData.table);
   const cols = table.cols.map((column) => normalizeHeader(column.label));
   const rows = table.rows;
-  const indexOf = (...names) => names.map(normalizeHeader).map((name) => cols.indexOf(name)).find((index) => index >= 0) ?? -1;
+  const indexOf = (name) => cols.indexOf(normalizeHeader(name));
   const indexes = {
-    title: indexOf('Titulo', 'Título'),
-    description: indexOf('Descripcion', 'Descripción'),
-    image: indexOf('Imagen'),
-    route: indexOf('Ruta'),
-    slug: indexOf('Slug'),
+    title: indexOf('macro_grupo'),
+    description: indexOf('descripcion_macro_grupo'),
+    image: indexOf('Imagen_macro_grupo'),
+    representative: indexOf('Representante_macro_grupo'),
   };
   const issues = [];
+  const seen = new Set();
 
   const categories = rows.flatMap((row, rowIndex) => {
     const cells = row.c || [];
@@ -207,14 +205,15 @@ export function gvizRowsToCategories(gvizData) {
     const title = get(indexes.title);
     const description = get(indexes.description);
     const rawImage = get(indexes.image);
-    const route = get(indexes.route);
-    const slug = get(indexes.slug);
+    const representative = get(indexes.representative).toLowerCase() === 'true';
 
-    if (![title, description, rawImage, route, slug].some(Boolean)) return [];
-    if (!title) {
-      issues.push(`Fila ${rowIndex + 2}: título vacío`);
+    if (!representative || !title) return [];
+    const comparisonKey = normalizeHeader(title);
+    if (seen.has(comparisonKey)) {
+      issues.push(`Fila ${rowIndex + 2}: representante duplicado para "${title}"`);
       return [];
     }
+    seen.add(comparisonKey);
 
     const image = resolveDriveImageUrl(rawImage);
     if (image && !isPublicWebUrl(image)) {
@@ -226,8 +225,7 @@ export function gvizRowsToCategories(gvizData) {
       title,
       description,
       image: isPublicWebUrl(image) ? image : '',
-      route,
-      slug,
+      route: '',
     }];
   });
 
@@ -417,6 +415,19 @@ export async function fetchProducts() {
   return result.valid;
 }
 
+export async function fetchCatalogContent() {
+  const gvizData = await fetchSheetWithRetry(SHEET_NAME);
+  const productResult = validateProducts(gvizRowsToProducts(gvizData));
+  const categoryResult = gvizRowsToProductCategories(gvizData);
+  if (import.meta.env?.DEV && productResult.issues.length > 0) {
+    console.warn('[Catálogo] Se descartaron filas de producto inválidas:', productResult.issues);
+  }
+  if (import.meta.env?.DEV && categoryResult.issues.length > 0) {
+    console.warn('[Categorías] Representantes duplicados o imágenes inválidas:', categoryResult.issues);
+  }
+  return { products: productResult.valid, categories: categoryResult.categories };
+}
+
 export async function fetchTestimonials() {
   const gvizData = await fetchSheetWithRetry(TESTIMONIOS_SHEET_NAME);
   return validateTestimonials(gvizRowsToTestimonials(gvizData));
@@ -444,26 +455,4 @@ export async function fetchEvidencias() {
   }
 
   return list;
-}
-
-export async function fetchCategories() {
-  const sheetName = CATEGORIES_SHEET_NAME.trim().normalize('NFC');
-  const requestUrl = buildSheetUrl(sheetName, null, CATEGORIES_SHEET_GID);
-  const gvizData = await fetchSheetWithRetry(sheetName, 3, CATEGORIES_SHEET_GID);
-  const result = gvizRowsToCategories(gvizData);
-  if (import.meta.env?.DEV) {
-    console.info('[Categories Sheet]', {
-      sheet: sheetName,
-      requestUrl,
-      status: 'ok',
-      columns: gvizData.table.cols.length,
-      rows: gvizData.table.rows.length,
-      normalizedRows: result.categories.length,
-      parseError: null,
-    });
-  }
-  if (import.meta.env?.DEV && result.issues.length > 0) {
-    console.warn('[Categorías] Se descartaron o ajustaron filas inválidas:', result.issues);
-  }
-  return result.categories;
 }

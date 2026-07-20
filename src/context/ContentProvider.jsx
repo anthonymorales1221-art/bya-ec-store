@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { fetchCategories, fetchEvidencias, fetchProducts, fetchTestimonials } from '../data/sheetsService';
+import { fetchCatalogContent, fetchEvidencias, fetchTestimonials } from '../data/sheetsService';
 import { ContentContext } from './content-context';
 
 function useRemoteCollection(loader) {
@@ -39,24 +39,29 @@ function useRemoteCollection(loader) {
 }
 
 export function ContentProvider({ children }) {
-  const catalog = useRemoteCollection(fetchProducts);
+  const catalog = useRemoteCollection(fetchCatalogContent);
   const testimonials = useRemoteCollection(fetchTestimonials);
   const evidencias = useRemoteCollection(fetchEvidencias);
-  const categories = useRemoteCollection(fetchCategories);
   const { reload: reloadCatalog } = catalog;
   const { reload: reloadTestimonials } = testimonials;
   const { reload: reloadEvidencias } = evidencias;
-  const { reload: reloadCategories } = categories;
 
   useEffect(() => {
     reloadCatalog();
     reloadTestimonials();
     reloadEvidencias();
-    reloadCategories();
-  }, [reloadCatalog, reloadTestimonials, reloadEvidencias, reloadCategories]);
+  }, [reloadCatalog, reloadTestimonials, reloadEvidencias]);
+
+  const { products, categories } = useMemo(() => ({
+    products: catalog.data?.products || [],
+    categories: catalog.data?.categories || [],
+  }), [catalog.data]);
+  const categoriesStatus = catalog.status === 'ready' && categories.length === 0
+    ? 'empty'
+    : catalog.status;
 
   const value = useMemo(() => ({
-    products: catalog.data,
+    products,
     catalogStatus: catalog.status,
     reloadCatalog: catalog.reload,
     testimonials: testimonials.data,
@@ -65,11 +70,11 @@ export function ContentProvider({ children }) {
     evidencias: evidencias.data,
     evidenciasStatus: evidencias.status,
     reloadEvidencias: evidencias.reload,
-    categories: categories.data,
-    categoriesStatus: categories.status,
-    categoriesError: categories.error,
-    reloadCategories: categories.reload,
-  }), [catalog, testimonials, evidencias, categories]);
+    categories,
+    categoriesStatus,
+    categoriesError: catalog.error,
+    reloadCategories: catalog.reload,
+  }), [catalog, testimonials, evidencias, products, categories, categoriesStatus]);
 
   return <ContentContext.Provider value={value}>{children}</ContentContext.Provider>;
 }

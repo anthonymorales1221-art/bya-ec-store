@@ -5,8 +5,6 @@ export const SHEET_ID = '1zS4FKxi3w1LZci1uEOAjx4Uca1y2qIzUVQLVYDZiuks';
 export const SHEET_NAME = 'Productos';
 export const TESTIMONIOS_SHEET_NAME = 'Testimonios';
 export const EVIDENCIAS_SHEET_NAME = 'Evidencias';
-export const CATEGORIES_SHEET_NAME = 'Categorías';
-export const CATEGORIES_SHEET_GID = '';
 
 export const CART_STORAGE_KEY = 'bya_cart_v1';
 
