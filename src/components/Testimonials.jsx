@@ -152,6 +152,44 @@ export default function Testimonials() {
     return () => { cancelAnimationFrame(refreshFrame); resizeObserver?.disconnect(); scene.removeEventListener('pointermove', move); scene.removeEventListener('pointerleave', reset); context.revert(); };
   }, [selected.length]);
 
+  useLayoutEffect(() => {
+    const section = sectionRef.current;
+    const scene = sceneRef.current;
+    if (!section || !scene || selected.length === 0) return undefined;
+
+    const media = gsap.matchMedia();
+    media.add('(max-width: 899px) and (prefers-reduced-motion: no-preference)', () => {
+      const headingItems = scene.querySelectorAll('[data-testimonial-heading] > *');
+      const cards = gsap.utils.toArray('[data-testimonial-card]', scene);
+      const context = gsap.context(() => {
+        gsap.fromTo(headingItems, {
+          y: 22,
+        }, {
+          y: 0,
+          duration: 0.62,
+          stagger: 0.08,
+          ease: 'power3.out',
+          clearProps: 'transform',
+          scrollTrigger: { trigger: scene, start: 'top 84%', once: true },
+        });
+        cards.forEach((card) => {
+          gsap.fromTo(card, {
+            y: 26,
+          }, {
+            y: 0,
+            duration: 0.66,
+            ease: 'power3.out',
+            clearProps: 'transform',
+            scrollTrigger: { trigger: card, start: 'top 88%', once: true },
+          });
+        });
+      }, section);
+      return () => context.revert();
+    });
+
+    return () => media.revert();
+  }, [selected.length]);
+
   if (testimonialsStatus !== 'ready' || selected.length === 0) return null;
   const sceneHeight = selected.length === 4 ? 'ba-testimonials--four' : `ba-testimonials--${selected.length}`;
   return (

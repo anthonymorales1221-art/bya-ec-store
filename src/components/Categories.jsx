@@ -291,6 +291,65 @@ export default function Categories() {
     return () => context.revert();
   }, [categoriesStatus, categories, panelWindows]);
 
+  useLayoutEffect(() => {
+    const section = sectionRef.current;
+    const stage = stageRef.current;
+    if (!section || !stage || categoriesStatus !== 'ready' || categories.length === 0) return undefined;
+
+    const media = gsap.matchMedia();
+    media.add('(max-width: 899px) and (prefers-reduced-motion: no-preference)', () => {
+      const introItems = stage.querySelectorAll('.ba-categories-intro > *');
+      const panels = gsap.utils.toArray('[data-category-panel]', stage);
+      let refreshFrame = 0;
+
+      gsap.fromTo(introItems, {
+        y: 22,
+      }, {
+        y: 0,
+        duration: 0.62,
+        stagger: 0.08,
+        ease: 'power3.out',
+        clearProps: 'transform',
+      });
+
+      panels.forEach((panel) => {
+        const items = [
+          panel.querySelector('.ba-category-number'),
+          panel.querySelector('[data-category-media]'),
+          panel.querySelector('.ba-category-copy > div'),
+          panel.querySelector('.ba-category-copy > .ba-arrow-link'),
+        ].filter(Boolean);
+        gsap.fromTo(items, {
+          y: 28,
+        }, {
+          y: 0,
+          duration: 0.68,
+          stagger: 0.09,
+          ease: 'power3.out',
+          clearProps: 'transform',
+          scrollTrigger: {
+            trigger: panel,
+            start: 'top 86%',
+            once: true,
+          },
+        });
+      });
+
+      const scheduleRefresh = () => {
+        cancelAnimationFrame(refreshFrame);
+        refreshFrame = requestAnimationFrame(() => ScrollTrigger.refresh());
+      };
+      section.addEventListener('load', scheduleRefresh, true);
+      document.fonts?.ready.then(scheduleRefresh);
+      return () => {
+        cancelAnimationFrame(refreshFrame);
+        section.removeEventListener('load', scheduleRefresh, true);
+      };
+    });
+
+    return () => media.revert();
+  }, [categoriesStatus, categories]);
+
   if (categoriesStatus === 'loading') {
     return (
       <section id="categorias" className="flex min-h-[70svh] items-center justify-center bg-[var(--ba-navy-deep)]" aria-busy="true">
