@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getInitials } from '../data/format';
-import { extractDriveId } from '../domain/image';
+import {
+  buildImageCandidates,
+  classifyImageRatio,
+  getImageVariant,
+} from '../domain/imagePresentation';
 
 /**
  * <img> resiliente para fotos de producto/testimonio que vienen de Google Drive.
@@ -23,18 +27,21 @@ export default function ProductImage({
   fallbackClassName,
   fallbackTextClassName,
   absolute = false,
+  variant = 'product',
+  loading,
+  fetchPriority,
 }) {
-  const candidates = useMemo(() => {
-    const urls = [src, fallbackSrc].flatMap((url) => {
-      if (!url) return [];
-      const driveId = extractDriveId(url);
-      return driveId ? [url, `https://drive.google.com/uc?export=view&id=${driveId}`] : [url];
-    });
-    return [...new Set(urls.filter(Boolean))];
-  }, [src, fallbackSrc]);
+  const presentation = getImageVariant(variant);
+  const candidates = useMemo(() => buildImageCandidates(src, fallbackSrc), [src, fallbackSrc]);
   const [stage, setStage] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+  const [ratio, setRatio] = useState('unknown');
 
-  useEffect(() => setStage(0), [src, fallbackSrc]);
+  useEffect(() => {
+    setStage(0);
+    setLoaded(false);
+    setRatio('unknown');
+  }, [src, fallbackSrc]);
 
   const currentSrc = candidates[stage] || null;
   const showFallback = !currentSrc;
@@ -42,46 +49,48 @@ export default function ProductImage({
     if (import.meta.env.DEV && stage === 0 && src) {
       console.warn(`[Imagen] No se pudo cargar la imagen principal de "${alt}". Se intentará el fallback.`);
     }
+    setLoaded(false);
     setStage((current) => current + 1);
   };
-
-  if (absolute) {
-    // Ambos nodos se renderizan superpuestos en el mismo contenedor padre
-    // (posicionado por quien use el componente); solo se alterna opacidad/display.
-    return (
-      <>
-        {currentSrc && (
-          <img
-            src={currentSrc}
-            alt={alt}
-            loading="lazy"
-            className={className}
-            onError={handleError}
-            style={{ display: showFallback ? 'none' : undefined }}
-          />
-        )}
-        <div className={fallbackClassName} style={{ display: showFallback ? 'flex' : 'none' }}>
-          <span className={fallbackTextClassName}>{getInitials(alt)}</span>
-        </div>
-      </>
-    );
-  }
-
-  if (showFallback) {
-    return (
-      <div className={fallbackClassName}>
-        <span className={fallbackTextClassName}>{getInitials(alt)}</span>
-      </div>
-    );
-  }
+  const handleLoad = (event) => {
+    setRatio(classifyImageRatio(event.currentTarget.naturalWidth, event.currentTarget.naturalHeight));
+    setLoaded(true);
+  };
+  const frameClassName = [
+    'ba-commerce-image',
+    `ba-commerce-image--${variant}`,
+    absolute ? 'absolute inset-0' : '',
+    loaded ? 'is-loaded' : 'is-loading',
+    className || '',
+  ].filter(Boolean).join(' ');
 
   return (
-    <img
-      src={currentSrc}
-      alt={alt}
-      loading="lazy"
-      className={className}
-      onError={handleError}
-    />
+    <span className={frameClassName} data-image-ratio={ratio} data-image-variant={variant}>
+      {presentation.ambient && currentSrc && (
+        <span
+          className="ba-commerce-image-ambient"
+          style={{ backgroundImage: `url(${JSON.stringify(currentSrc)})` }}
+          aria-hidden="true"
+        />
+      )}
+      {currentSrc && (
+        <img
+          src={currentSrc}
+          alt={alt}
+          loading={loading || presentation.loading}
+          decoding="async"
+          fetchPriority={fetchPriority}
+          className="ba-commerce-image-main"
+          onLoad={handleLoad}
+          onError={handleError}
+        />
+      )}
+      {!loaded && !showFallback && <span className="ba-commerce-image-loading" aria-hidden="true" />}
+      {showFallback && (
+        <span className={`ba-commerce-image-fallback ${fallbackClassName || ''}`} role="img" aria-label={alt}>
+          <span className={fallbackTextClassName}>{getInitials(alt)}</span>
+        </span>
+      )}
+    </span>
   );
 }

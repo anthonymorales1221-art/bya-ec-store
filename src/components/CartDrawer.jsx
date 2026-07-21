@@ -54,8 +54,9 @@ function CartStep() {
             absolute={false}
             src={item.product.img}
             alt={item.product.name}
-            className="w-16 h-16 rounded-2xl object-cover flex-shrink-0 bg-cream-deep"
-            fallbackClassName="w-16 h-16 rounded-2xl flex-shrink-0 flex items-center justify-center font-display font-semibold text-ink-soft bg-gradient-to-br from-peach to-dust"
+            variant="thumbnail"
+            className="w-16 h-16 rounded-2xl flex-shrink-0"
+            fallbackClassName="font-display font-semibold text-ink-soft"
           />
           <div className="flex-1 min-w-0">
             <div className="font-semibold text-sm leading-snug truncate">{item.product.name}</div>

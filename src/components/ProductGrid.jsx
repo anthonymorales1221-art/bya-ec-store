@@ -27,8 +27,9 @@ function ProductCard({ product, onOpen }) {
           absolute
           src={product.img}
           alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
-          fallbackClassName="absolute inset-0 items-center justify-center font-display font-semibold text-2xl text-ink-soft bg-gradient-to-br from-peach to-dust"
+          variant="product"
+          className="w-full h-full"
+          fallbackClassName="font-display font-semibold text-2xl text-ink-soft"
           fallbackTextClassName=""
         />
       </div>

@@ -40,8 +40,9 @@ export default function ProductModal({ sku, onClose }) {
               absolute
               src={product.img}
               alt={product.name}
-              className="w-full h-full object-cover"
-              fallbackClassName="absolute inset-0 items-center justify-center font-display font-semibold text-4xl text-ink-soft bg-gradient-to-br from-peach to-dust"
+              variant="detail"
+              className="w-full h-full"
+              fallbackClassName="font-display font-semibold text-4xl text-ink-soft"
             />
           </div>
 

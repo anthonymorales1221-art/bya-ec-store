@@ -22,7 +22,7 @@ function TestimonialCard({ item, journey }) {
         <blockquote className="mt-2 text-lg leading-8 text-white/88 sm:text-xl">{item.texto}</blockquote>
       </div>
       <div className="ba-testimonial-identity">
-        <ProductImage src={item.foto_url} alt={item.nombre} className="h-12 w-12 rounded-full object-cover" fallbackClassName="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--ba-copper)] font-bold text-white" fallbackTextClassName="text-xs" />
+        <ProductImage src={item.foto_url} alt={item.nombre} variant="avatar" className="h-12 w-12 rounded-full" fallbackClassName="bg-[var(--ba-copper)] font-bold text-white" fallbackTextClassName="text-xs" />
         <cite className="not-italic text-sm font-extrabold text-white">{item.nombre}</cite>
       </div>
     </article>

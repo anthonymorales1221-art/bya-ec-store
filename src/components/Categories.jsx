@@ -346,8 +346,9 @@ export default function Categories() {
                       src={category.image}
                       fallbackSrc={category.fallbackImage}
                       alt={`Selección de ${category.title}`}
-                      className="ba-category-image h-full w-full object-cover"
-                      fallbackClassName="hidden"
+                      variant="category"
+                      className="ba-category-image h-full w-full"
+                      fallbackClassName="font-display text-4xl text-white"
                     />
                   </span>
                 )}

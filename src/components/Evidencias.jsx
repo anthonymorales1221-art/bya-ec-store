@@ -53,8 +53,9 @@ function EvidenciaCard({ e, index }) {
           <ProductImage
             src={e.fotoGrande}
             alt={e.nombre}
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-            fallbackClassName="absolute inset-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-peach to-dust"
+            variant="evidence"
+            className="absolute inset-0 w-full h-full"
+            fallbackClassName="font-display font-semibold text-ink-soft text-2xl"
             fallbackTextClassName="font-display font-semibold text-ink-soft text-2xl"
           />
         </div>
@@ -69,8 +70,9 @@ function EvidenciaCard({ e, index }) {
               <ProductImage
                 src={e.fotoPequena || e.fotoGrande}
                 alt={e.nombre}
-                className="w-full h-full object-cover"
-                fallbackClassName="w-full h-full flex items-center justify-center bg-gradient-to-br from-peach to-dust"
+                variant="thumbnail"
+                className="w-full h-full"
+                fallbackClassName="font-display font-semibold text-ink-soft text-base"
                 fallbackTextClassName="font-display font-semibold text-ink-soft text-base"
               />
             </div>
