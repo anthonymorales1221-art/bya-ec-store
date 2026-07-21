@@ -172,16 +172,15 @@ export default function Testimonials() {
           clearProps: 'transform',
           scrollTrigger: { trigger: scene, start: 'top 84%', once: true },
         });
-        cards.forEach((card) => {
-          gsap.fromTo(card, {
-            y: 26,
-          }, {
-            y: 0,
-            duration: 0.66,
-            ease: 'power3.out',
-            clearProps: 'transform',
-            scrollTrigger: { trigger: card, start: 'top 88%', once: true },
-          });
+        gsap.fromTo(cards, {
+          y: 26,
+        }, {
+          y: 0,
+          duration: 0.66,
+          stagger: 0.08,
+          ease: 'power3.out',
+          clearProps: 'transform',
+          scrollTrigger: { trigger: scene.querySelector('.ba-testimonials-cards'), start: 'top 90%', once: true },
         });
       }, section);
       return () => context.revert();
@@ -205,7 +204,7 @@ export default function Testimonials() {
             </h2>
             <p data-testimonial-subtitle className="mt-6 max-w-xl text-base leading-8 text-white/58">Compras acompañadas, productos seleccionados y entregas que generan confianza.</p>
           </div>
-          <div className="ba-testimonials-cards">{selected.map((item, index) => <TestimonialCard key={`${item.nombre}-${index}`} item={item} journey={journeys[index]} />)}</div>
+          <div className="ba-testimonials-cards" role="region" aria-label="Testimonios de clientes" tabIndex="0">{selected.map((item, index) => <TestimonialCard key={`${item.nombre}-${index}`} item={item} journey={journeys[index]} />)}</div>
         </div>
       </div>
     </section>

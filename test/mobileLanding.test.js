@@ -18,7 +18,8 @@ test('categorías móviles forman una unidad en el orden editorial requerido', (
 });
 
 test('el marco móvil reserva espacio sin heredar una altura de escritorio', () => {
-  assert.match(css, /max-height: min\(68svh, 590px\)/);
+  assert.match(css, /width: min\(100%, 520px\)/);
+  assert.doesNotMatch(css, /max-height: min\(68svh, 590px\)/);
   assert.match(css, /\.ba-category-media[^}]*min-height: 0/);
   assert.match(categories, /variant="category"/);
 });
@@ -79,4 +80,20 @@ test('el encabezado movil de testimonios queda en flujo y dentro del viewport', 
   assert.match(css, /\.ba-testimonials-heading[^}]*position: relative/);
   assert.match(css, /\.ba-testimonials-heading[^}]*transform: none !important/);
   assert.match(css, /\.ba-testimonials-heading p[^}]*max-width: min\(100%, 36rem\)/);
+});
+
+test('solo la primera imagen de categoria recibe carga prioritaria', () => {
+  assert.match(categories, /loading=\{index === 0 \? 'eager' : 'lazy'\}/);
+  assert.match(categories, /fetchPriority=\{index === 0 \? 'high' : 'auto'\}/);
+  assert.match(css, /\.ba-commerce-image--category\.is-loaded \.ba-commerce-image-main[^}]*opacity: 1 !important/);
+  assert.match(css, /\[data-category-depth\][^}]*opacity: 0 !important[^}]*visibility: hidden !important/);
+});
+
+test('testimonios moviles usan un carrusel tactil editorial continuo', () => {
+  assert.match(testimonials, /role="region" aria-label="Testimonios de clientes" tabIndex="0"/);
+  assert.match(css, /\.ba-testimonials-cards[^}]*display: flex/);
+  assert.match(css, /\.ba-testimonials-cards[^}]*overflow-x: auto/);
+  assert.match(css, /\.ba-testimonials-cards[^}]*scroll-snap-type: x mandatory/);
+  assert.match(css, /\.ba-testimonial-card[^}]*flex: 0 0 min\(82vw, 390px\)/);
+  assert.match(css, /\.ba-testimonial-card[^}]*scroll-snap-align: start/);
 });

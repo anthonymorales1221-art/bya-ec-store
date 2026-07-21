@@ -406,6 +406,8 @@ export default function Categories() {
                       fallbackSrc={category.fallbackImage}
                       alt={`Selección de ${category.title}`}
                       variant="category"
+                      loading={index === 0 ? 'eager' : 'lazy'}
+                      fetchPriority={index === 0 ? 'high' : 'auto'}
                       className="ba-category-image h-full w-full"
                       fallbackClassName="font-display text-4xl text-white"
                     />
