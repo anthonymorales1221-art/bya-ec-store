@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { getInitials } from '../data/format';
 import {
   buildImageCandidates,
@@ -33,28 +33,28 @@ export default function ProductImage({
 }) {
   const presentation = getImageVariant(variant);
   const candidates = useMemo(() => buildImageCandidates(src, fallbackSrc), [src, fallbackSrc]);
-  const [stage, setStage] = useState(0);
-  const [loaded, setLoaded] = useState(false);
-  const [ratio, setRatio] = useState('unknown');
-
-  useEffect(() => {
-    setStage(0);
-    setLoaded(false);
-    setRatio('unknown');
-  }, [src, fallbackSrc]);
-
-  const currentSrc = candidates[stage] || null;
+  const candidatesKey = candidates.join('\u0000');
+  const [attempt, setAttempt] = useState({ key: candidatesKey, index: 0 });
+  const [loadResult, setLoadResult] = useState({ src: null, ratio: 'unknown' });
+  const candidateIndex = attempt.key === candidatesKey ? attempt.index : 0;
+  const currentSrc = candidates[candidateIndex] || null;
+  const loaded = Boolean(currentSrc && loadResult.src === currentSrc);
+  const ratio = loaded ? loadResult.ratio : 'unknown';
   const showFallback = !currentSrc;
   const handleError = () => {
-    if (import.meta.env.DEV && stage === 0 && src) {
+    if (import.meta.env.DEV && candidateIndex === 0 && src) {
       console.warn(`[Imagen] No se pudo cargar la imagen principal de "${alt}". Se intentará el fallback.`);
     }
-    setLoaded(false);
-    setStage((current) => current + 1);
+    setAttempt((current) => ({
+      key: candidatesKey,
+      index: (current.key === candidatesKey ? current.index : 0) + 1,
+    }));
   };
   const handleLoad = (event) => {
-    setRatio(classifyImageRatio(event.currentTarget.naturalWidth, event.currentTarget.naturalHeight));
-    setLoaded(true);
+    setLoadResult({
+      src: currentSrc,
+      ratio: classifyImageRatio(event.currentTarget.naturalWidth, event.currentTarget.naturalHeight),
+    });
   };
   const frameClassName = [
     'ba-commerce-image',
@@ -75,6 +75,7 @@ export default function ProductImage({
       )}
       {currentSrc && (
         <img
+          key={currentSrc}
           src={currentSrc}
           alt={alt}
           loading={loading || presentation.loading}

@@ -31,7 +31,7 @@ export default function ProductModal({ sku, onClose }) {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 16, scale: 0.97 }}
           transition={{ duration: 0.35, ease: EASE }}
-          className="bg-cream rounded-3xl max-w-3xl w-full max-h-[88vh] overflow-y-auto grid sm:grid-cols-2"
+          className="ba-product-modal-panel bg-cream text-ink rounded-3xl max-w-3xl w-full max-h-[88vh] overflow-y-auto grid sm:grid-cols-2"
           role="dialog"
           aria-label={product.name}
         >

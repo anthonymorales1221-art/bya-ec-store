@@ -66,6 +66,23 @@ test('el fondo ambiental es decorativo y no duplica el texto alternativo', () =>
   assert.match(component, /alt=\{alt\}/);
 });
 
+test('el estado de carga queda asociado a la URL y no se reinicia en un efecto tardío', () => {
+  const component = readFileSync(new URL('../src/components/ProductImage.jsx', import.meta.url), 'utf8');
+  assert.match(component, /loadResult\.src === currentSrc/);
+  assert.match(component, /key=\{currentSrc\}/);
+  assert.doesNotMatch(component, /useEffect\(\(\) => \{\s*setStage/);
+  assert.doesNotMatch(component, /setLoaded\(false\)/);
+});
+
+test('un cambio de lista invalida inmediatamente el índice de un intento anterior', () => {
+  const previousAttempt = { key: '', index: 2 };
+  const nextCandidates = buildImageCandidates('https://example.com/product.png');
+  const nextKey = nextCandidates.join('\u0000');
+  const effectiveIndex = previousAttempt.key === nextKey ? previousAttempt.index : 0;
+  assert.equal(effectiveIndex, 0);
+  assert.equal(nextCandidates[effectiveIndex], 'https://example.com/product.png');
+});
+
 test('las imágenes comerciales ya no solicitan object-cover en sus consumidores', () => {
   const commercialComponents = [
     'ProductGrid.jsx', 'Categories.jsx', 'FeaturedProducts.jsx', 'Evidencias.jsx',
