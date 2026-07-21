@@ -1,7 +1,7 @@
 // Configuración general del negocio — migrada del index.html original.
 export const WHATSAPP_NUMBER = '593994008778'; // formato internacional, sin '+' ni espacios
 
-export const SHEET_ID = '1zS4FKxi3w1LZci1uEOAjx4Uca1y2qIzUVQLVYDZiuks';
+export const SHEET_ID = '1cMEKa-Fro0qztr8nC_PMLpK7_NTgQWKbtO2AnNFkV00';
 export const SHEET_NAME = 'Productos';
 export const TESTIMONIOS_SHEET_NAME = 'Testimonios';
 export const EVIDENCIAS_SHEET_NAME = 'Evidencias';
