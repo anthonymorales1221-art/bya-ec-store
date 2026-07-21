@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useCart } from '../hooks/useCart';
@@ -14,9 +14,9 @@ const JOURNEY_SEQUENCE = {
   4: ['a', 'b', 'c', 'd'],
 };
 
-function TestimonialCard({ item, journey }) {
+function TestimonialCard({ item, journey, active = false }) {
   return (
-    <article className={`ba-testimonial-card ba-testimonial-card--${journey}`} data-testimonial-card data-journey={journey} data-cursor="LEER">
+    <article className={`ba-testimonial-card ba-testimonial-card--${journey}${active ? ' is-active' : ''}`} data-testimonial-card data-journey={journey} data-cursor="LEER">
       <div className="ba-testimonial-quote">
         <span className="font-display text-5xl leading-none text-[var(--ba-copper-soft)]" aria-hidden="true">“</span>
         <blockquote className="mt-2 text-lg leading-8 text-white/88 sm:text-xl">{item.texto}</blockquote>
@@ -33,6 +33,8 @@ export default function Testimonials() {
   const { testimonials, testimonialsStatus } = useCart();
   const sectionRef = useRef(null);
   const sceneRef = useRef(null);
+  const railRef = useRef(null);
+  const [activeSlide, setActiveSlide] = useState(0);
   const selected = useMemo(() => testimonials.slice(0, 4), [testimonials]);
   const journeys = JOURNEY_SEQUENCE[selected.length] || JOURNEY_SEQUENCE[4];
 
@@ -157,14 +159,30 @@ export default function Testimonials() {
     const scene = sceneRef.current;
     if (!section || !scene || selected.length === 0) return undefined;
 
-    const rail = scene.querySelector('.ba-testimonials-cards');
+    const rail = railRef.current;
     if (window.matchMedia('(max-width: 899px)').matches) {
       rail?.scrollTo({ left: 0, behavior: 'auto' });
+      setActiveSlide(0);
     }
     const media = gsap.matchMedia();
     media.add('(max-width: 899px) and (prefers-reduced-motion: no-preference)', () => {
       const headingItems = scene.querySelectorAll('[data-testimonial-heading] > *');
       const cards = gsap.utils.toArray('[data-testimonial-card]', scene);
+      let scrollFrame = 0;
+      const updateActiveSlide = () => {
+        cancelAnimationFrame(scrollFrame);
+        scrollFrame = requestAnimationFrame(() => {
+          if (!rail || cards.length === 0) return;
+          const railLeft = rail.getBoundingClientRect().left;
+          const closest = cards.reduce((best, card, index) => (
+            Math.abs(card.getBoundingClientRect().left - railLeft) < best.distance
+              ? { index, distance: Math.abs(card.getBoundingClientRect().left - railLeft) }
+              : best
+          ), { index: 0, distance: Number.POSITIVE_INFINITY });
+          setActiveSlide(closest.index);
+        });
+      };
+      rail?.addEventListener('scroll', updateActiveSlide, { passive: true });
       const context = gsap.context(() => {
         gsap.fromTo(headingItems, {
           y: 22,
@@ -187,7 +205,11 @@ export default function Testimonials() {
           scrollTrigger: { trigger: rail, start: 'top 90%', once: true },
         });
       }, section);
-      return () => context.revert();
+      return () => {
+        cancelAnimationFrame(scrollFrame);
+        rail?.removeEventListener('scroll', updateActiveSlide);
+        context.revert();
+      };
     });
 
     return () => media.revert();
@@ -208,7 +230,11 @@ export default function Testimonials() {
             </h2>
             <p data-testimonial-subtitle className="mt-6 max-w-xl text-base leading-8 text-white/58">Compras acompañadas, productos seleccionados y entregas que generan confianza.</p>
           </div>
-          <div className="ba-testimonials-cards" role="region" aria-label="Testimonios de clientes" tabIndex="0">{selected.map((item, index) => <TestimonialCard key={`${item.nombre}-${index}`} item={item} journey={journeys[index]} />)}</div>
+          <div ref={railRef} className="ba-testimonials-cards" role="region" aria-label="Testimonios de clientes" tabIndex="0">{selected.map((item, index) => <TestimonialCard key={`${item.nombre}-${index}`} item={item} journey={journeys[index]} active={index === activeSlide} />)}</div>
+          <div className="ba-testimonials-progress" aria-live="polite">
+            <span>{String(activeSlide + 1).padStart(2, '0')} / {String(selected.length).padStart(2, '0')}</span>
+            <i aria-hidden="true"><span style={{ transform: `scaleX(${(activeSlide + 1) / selected.length})` }} /></i>
+          </div>
         </div>
       </div>
     </section>

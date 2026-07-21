@@ -313,25 +313,21 @@ export default function Categories() {
       });
 
       panels.forEach((panel) => {
-        const items = [
-          panel.querySelector('.ba-category-number'),
-          panel.querySelector('[data-category-media]'),
-          panel.querySelector('.ba-category-copy > div'),
-          panel.querySelector('.ba-category-copy > .ba-arrow-link'),
-        ].filter(Boolean);
-        gsap.fromTo(items, {
-          y: 28,
-        }, {
-          y: 0,
-          duration: 0.68,
-          stagger: 0.09,
-          ease: 'power3.out',
-          clearProps: 'transform',
-          scrollTrigger: {
-            trigger: panel,
-            start: 'top 86%',
-            once: true,
-          },
+        const number = panel.querySelector('.ba-category-number');
+        const categoryMedia = panel.querySelector('[data-category-media]');
+        const copy = panel.querySelector('.ba-category-copy > div');
+        const cta = panel.querySelector('.ba-category-copy > .ba-arrow-link');
+        const entrance = gsap.timeline({ paused: true });
+        entrance
+          .fromTo(number, { y: 18, opacity: 0.35 }, { y: 0, opacity: 1, duration: 0.42, ease: 'power2.out', clearProps: 'transform,opacity' })
+          .fromTo(categoryMedia, { y: 28, scale: 0.96, opacity: 0.45 }, { y: 0, scale: 1, opacity: 1, duration: 0.72, ease: 'power3.out', clearProps: 'transform,opacity' }, 0.06)
+          .fromTo(copy, { y: 24, opacity: 0.35 }, { y: 0, opacity: 1, duration: 0.55, ease: 'power3.out', clearProps: 'transform,opacity' }, 0.28)
+          .fromTo(cta, { y: 16, opacity: 0.35 }, { y: 0, opacity: 1, duration: 0.45, ease: 'power2.out', clearProps: 'transform,opacity' }, 0.42);
+        ScrollTrigger.create({
+          trigger: panel,
+          start: 'top 86%',
+          once: true,
+          onEnter: () => entrance.play(0),
         });
       });
 

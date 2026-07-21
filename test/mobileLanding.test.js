@@ -95,8 +95,10 @@ test('testimonios moviles usan un carrusel tactil editorial continuo', () => {
   assert.match(css, /\.ba-testimonials-cards[^}]*display: flex/);
   assert.match(css, /\.ba-testimonials-cards[^}]*overflow-x: auto/);
   assert.match(css, /\.ba-testimonials-cards[^}]*scroll-snap-type: x mandatory/);
-  assert.match(css, /\.ba-testimonial-card[^}]*flex: 0 0 min\(82vw, 390px\)/);
+  assert.match(css, /\.ba-testimonial-card[^}]*flex: 0 0 min\(88%, 390px\)/);
   assert.match(css, /\.ba-testimonial-card[^}]*scroll-snap-align: start/);
+  assert.match(testimonials, /ba-testimonials-progress/);
+  assert.match(testimonials, /active=\{index === activeSlide\}/);
 });
 
 test('el menu movil cierra, restaura el body y navega al destino pendiente', () => {
@@ -107,8 +109,10 @@ test('el menu movil cierra, restaura el body y navega al destino pendiente', () 
   assert.match(navbar, /setMenuOpen\(false\)/);
   assert.match(navbar, /document\.body\.style\.overflow = previous/);
   assert.match(navbar, /requestAnimationFrame/);
-  assert.match(navbar, /target\.scrollIntoView/);
-  assert.match(navbar, /prefers-reduced-motion: reduce/);
+  assert.match(navbar, /window\.scrollTo/);
+  assert.match(navbar, /target\.getBoundingClientRect\(\)\.top \+ window\.scrollY - headerHeight/);
+  assert.match(navbar, /root\.style\.scrollBehavior = 'auto'/);
+  assert.match(navbar, /root\.style\.scrollBehavior = previousScrollBehavior/);
 });
 
 test('los destinos comparten offset y categorias no recorta contenido movil', () => {

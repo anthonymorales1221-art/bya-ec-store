@@ -88,18 +88,27 @@ function LandingNavbar({ scrolled }) {
   useEffect(() => {
     if (menuOpen || !pendingTarget) return undefined;
     let scrollFrame = 0;
+    let layoutFrame = 0;
     const closeFrame = requestAnimationFrame(() => {
-      scrollFrame = requestAnimationFrame(() => {
-        const target = document.querySelector(pendingTarget);
-        if (!target) return;
-        const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        window.history.replaceState(null, '', pendingTarget);
-        target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
-        setPendingTarget('');
+      layoutFrame = requestAnimationFrame(() => {
+        scrollFrame = requestAnimationFrame(() => {
+          const target = document.querySelector(pendingTarget);
+          if (!target) return;
+          const headerHeight = document.querySelector('header')?.getBoundingClientRect().height || 0;
+          const targetTop = target.getBoundingClientRect().top + window.scrollY - headerHeight;
+          const root = document.documentElement;
+          const previousScrollBehavior = root.style.scrollBehavior;
+          window.history.replaceState(null, '', pendingTarget);
+          root.style.scrollBehavior = 'auto';
+          window.scrollTo({ top: Math.max(0, targetTop), behavior: 'auto' });
+          root.style.scrollBehavior = previousScrollBehavior;
+          setPendingTarget('');
+        });
       });
     });
     return () => {
       cancelAnimationFrame(closeFrame);
+      cancelAnimationFrame(layoutFrame);
       cancelAnimationFrame(scrollFrame);
     };
   }, [menuOpen, pendingTarget]);
