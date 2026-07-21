@@ -7,6 +7,7 @@ const categories = readFileSync(new URL('../src/components/Categories.jsx', impo
 const testimonials = readFileSync(new URL('../src/components/Testimonials.jsx', import.meta.url), 'utf8');
 const footer = readFileSync(new URL('../src/components/Footer.jsx', import.meta.url), 'utf8');
 const trustStrip = readFileSync(new URL('../src/components/TrustStrip.jsx', import.meta.url), 'utf8');
+const navbar = readFileSync(new URL('../src/components/Navbar.jsx', import.meta.url), 'utf8');
 
 test('categorías móviles forman una unidad en el orden editorial requerido', () => {
   assert.match(css, /\.ba-category-copy \{ display: contents; \}/);
@@ -96,4 +97,24 @@ test('testimonios moviles usan un carrusel tactil editorial continuo', () => {
   assert.match(css, /\.ba-testimonials-cards[^}]*scroll-snap-type: x mandatory/);
   assert.match(css, /\.ba-testimonial-card[^}]*flex: 0 0 min\(82vw, 390px\)/);
   assert.match(css, /\.ba-testimonial-card[^}]*scroll-snap-align: start/);
+});
+
+test('el menu movil cierra, restaura el body y navega al destino pendiente', () => {
+  for (const target of ['#inicio', '#categorias', '#seleccion', '#como-comprar', '#opiniones']) {
+    assert.match(navbar, new RegExp(`href: '${target}'`));
+  }
+  assert.match(navbar, /setPendingTarget\(href\)/);
+  assert.match(navbar, /setMenuOpen\(false\)/);
+  assert.match(navbar, /document\.body\.style\.overflow = previous/);
+  assert.match(navbar, /requestAnimationFrame/);
+  assert.match(navbar, /target\.scrollIntoView/);
+  assert.match(navbar, /prefers-reduced-motion: reduce/);
+});
+
+test('los destinos comparten offset y categorias no recorta contenido movil', () => {
+  assert.match(css, /--ba-header-offset: 84px/);
+  assert.match(css, /#seleccion,/);
+  assert.match(css, /scroll-margin-top: var\(--ba-header-offset\)/);
+  assert.match(css, /\.ba-categories-stage[^}]*overflow: visible/);
+  assert.match(testimonials, /rail\?\.scrollTo\(\{ left: 0, behavior: 'auto' \}\)/);
 });

@@ -63,6 +63,13 @@ const LANDING_LINKS = [
 function LandingNavbar({ scrolled }) {
   const { contactWhatsAppForHelp } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [pendingTarget, setPendingTarget] = useState('');
+
+  const navigateToSection = (event, href) => {
+    event.preventDefault();
+    setPendingTarget(href);
+    setMenuOpen(false);
+  };
 
   useEffect(() => {
     if (!menuOpen) return undefined;
@@ -77,6 +84,25 @@ function LandingNavbar({ scrolled }) {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = previous; };
   }, [menuOpen]);
+
+  useEffect(() => {
+    if (menuOpen || !pendingTarget) return undefined;
+    let scrollFrame = 0;
+    const closeFrame = requestAnimationFrame(() => {
+      scrollFrame = requestAnimationFrame(() => {
+        const target = document.querySelector(pendingTarget);
+        if (!target) return;
+        const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        window.history.replaceState(null, '', pendingTarget);
+        target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+        setPendingTarget('');
+      });
+    });
+    return () => {
+      cancelAnimationFrame(closeFrame);
+      cancelAnimationFrame(scrollFrame);
+    };
+  }, [menuOpen, pendingTarget]);
 
   return (
     <header className={`sticky top-0 z-[200] border-b transition-all duration-300 ${scrolled || menuOpen ? 'border-[var(--ba-border)] bg-[var(--ba-warm-white)]/95 shadow-[0_8px_30px_rgba(16,36,62,0.06)] backdrop-blur-xl' : 'border-transparent bg-[var(--ba-ivory)]/80 backdrop-blur-md'}`}>
@@ -107,7 +133,7 @@ function LandingNavbar({ scrolled }) {
       {menuOpen && (
         <nav id="landing-mobile-menu" aria-label="Navegación móvil" className="border-t border-[var(--ba-border)] bg-[var(--ba-warm-white)] px-5 pb-5 pt-3 md:hidden">
           <div className="mx-auto flex max-w-[1240px] flex-col">
-            {LANDING_LINKS.map((item) => <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)} className="flex min-h-12 items-center border-b border-[var(--ba-border)]/70 text-sm font-bold text-[var(--ba-graphite)]">{item.label}</a>)}
+            {LANDING_LINKS.map((item) => <a key={item.href} href={item.href} onClick={(event) => navigateToSection(event, item.href)} className="flex min-h-12 items-center border-b border-[var(--ba-border)]/70 text-sm font-bold text-[var(--ba-graphite)]">{item.label}</a>)}
             <Link to="/tienda" onClick={() => setMenuOpen(false)} className="mt-4 inline-flex min-h-12 items-center justify-center rounded-full border border-[var(--ba-navy)] text-sm font-extrabold text-[var(--ba-navy)]">Ir a la tienda</Link>
             <button type="button" onClick={() => { setMenuOpen(false); contactWhatsAppForHelp(); }} className="mt-2 inline-flex min-h-12 items-center justify-center rounded-full bg-[var(--ba-navy)] text-sm font-extrabold text-white">Hablar con un asesor</button>
           </div>

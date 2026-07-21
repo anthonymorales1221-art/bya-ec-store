@@ -157,6 +157,10 @@ export default function Testimonials() {
     const scene = sceneRef.current;
     if (!section || !scene || selected.length === 0) return undefined;
 
+    const rail = scene.querySelector('.ba-testimonials-cards');
+    if (window.matchMedia('(max-width: 899px)').matches) {
+      rail?.scrollTo({ left: 0, behavior: 'auto' });
+    }
     const media = gsap.matchMedia();
     media.add('(max-width: 899px) and (prefers-reduced-motion: no-preference)', () => {
       const headingItems = scene.querySelectorAll('[data-testimonial-heading] > *');
@@ -180,7 +184,7 @@ export default function Testimonials() {
           stagger: 0.08,
           ease: 'power3.out',
           clearProps: 'transform',
-          scrollTrigger: { trigger: scene.querySelector('.ba-testimonials-cards'), start: 'top 90%', once: true },
+          scrollTrigger: { trigger: rail, start: 'top 90%', once: true },
         });
       }, section);
       return () => context.revert();
