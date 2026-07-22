@@ -39,13 +39,7 @@ export default function MobileEditorialMotion() {
 
         const story = document.querySelector('.ba-story');
         if (story) {
-          reveal(story, [...story.querySelectorAll('.ba-story-lead > :not(.ba-story-media)')], { y: 22 });
-          const storyImage = story.querySelector('.ba-story-media img');
-          if (storyImage) gsap.fromTo(storyImage, { y: -14 }, {
-            y: 14,
-            ease: 'none',
-            scrollTrigger: { trigger: storyImage, start: 'top bottom', end: 'bottom top', scrub: 0.65 },
-          });
+          reveal(story, [...story.querySelectorAll('.ba-story-lead > *')], { y: 22 });
           story.querySelectorAll('.ba-story-step').forEach((step) => {
             reveal(step, [...step.children], { y: 20, duration: 0.58, stagger: 0.07 });
           });

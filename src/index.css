@@ -319,7 +319,6 @@ html {
   .ba-commerce-image--category .ba-commerce-image-ambient { filter: blur(14px) saturate(.58) brightness(.66); opacity: .34; }
   .ba-story, .ba-buying { padding-bottom: clamp(4.75rem, 13vw, 7rem); padding-top: clamp(4.75rem, 13vw, 7rem); }
   .ba-story-lead { position: relative; }
-  .ba-story-media img { height: calc(100% + 28px); margin-top: -14px; will-change: transform; }
   .ba-story-steps, .ba-buying-steps { margin-top: 2.75rem; padding-left: 1.4rem; position: relative; }
   .ba-story-steps::before, .ba-buying-steps::before { background: var(--ba-border); bottom: 1.5rem; content: ''; left: 0; position: absolute; top: 1.5rem; width: 1px; }
   .ba-story-steps::after, .ba-buying-steps::after { background: var(--ba-copper); content: ''; left: 0; position: absolute; top: 1.5rem; transform: scaleY(var(--story-progress, var(--buying-progress, 0))); transform-origin: top; transition: transform 520ms var(--ba-ease-soft); width: 1px; height: calc(100% - 3rem); }
@@ -384,6 +383,18 @@ html {
 @media (min-width: 900px) and (max-width: 1279px) {
   .ba-category-panel { gap: 2.5rem; grid-template-columns: minmax(0, 1.25fr) minmax(280px, .9fr); padding-left: 2rem; padding-right: 2rem; }
   .ba-category-title { font-size: clamp(3rem, 4.8vw, 4.5rem); }
+}
+
+@media (min-width: 1024px) {
+  .ba-story-lead {
+    align-self: start;
+    background: var(--ba-warm-white);
+    box-shadow: 0 -3rem 0 var(--ba-warm-white);
+    padding-bottom: clamp(.75rem, 1.5vh, 1.25rem);
+    position: sticky;
+    top: calc(var(--ba-header-offset) + clamp(.75rem, 2vh, 1.5rem));
+    z-index: 2;
+  }
 }
 
 body {
@@ -556,7 +567,7 @@ textarea:focus-visible {
   .ba-category-image, .ba-category-media:hover .ba-category-image { transform: none !important; }
   .ba-reveal-word > span { opacity: 1 !important; transform: none !important; }
   .ba-story-step, .ba-buying-step, .ba-featured-scroll .ba-product-card, .ba-evidence-card, .ba-faq-item { opacity: 1 !important; transform: none !important; }
-  .ba-story-media img, .ba-testimonials-scene::before { transform: none !important; transition: none !important; }
+  .ba-testimonials-scene::before { transform: none !important; transition: none !important; }
   .ba-featured-mobile-progress i span, .ba-testimonials-progress i span { transition: none !important; }
   .ba-ticker, .ba-testimonial-row { animation: none; }
 }

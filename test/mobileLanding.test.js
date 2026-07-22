@@ -129,6 +129,34 @@ test('nuestra selección y cómo comprar exponen progreso y estado activo sin pi
   assert.match(css, /\.ba-story-steps::after, \.ba-buying-steps::after/);
 });
 
+test('nuestra selección fija en escritorio todo el mensaje editorial sin pin ni posición fixed', () => {
+  const leadStart = story.indexOf('className="ba-story-lead"');
+  const leadEnd = story.indexOf('</div>', leadStart);
+  const stickyCopy = story.slice(leadStart, leadEnd);
+  assert.match(stickyCopy, /Nuestra selección/);
+  assert.match(stickyCopy, /No elegimos productos por cantidad/);
+  assert.match(stickyCopy, /En B&A\.EC Store reunimos productos prácticos/);
+  assert.match(css, /@media \(min-width: 1024px\)[\s\S]*?\.ba-story-lead[\s\S]*?position: sticky/);
+  assert.match(css, /top: calc\(var\(--ba-header-offset\) \+ clamp/);
+  assert.doesNotMatch(stickyCopy, /position:\s*fixed|pin:/);
+  assert.doesNotMatch(story, /pin:/);
+});
+
+test('nuestra selección omite el visual decorativo y conserva progreso, pasos y sticky responsive', () => {
+  const lead = story.indexOf('className="ba-story-lead"');
+  const steps = story.indexOf('className="ba-story-steps');
+  const mobileStart = css.indexOf('@media (max-width: 899px)');
+  const mobileEnd = css.indexOf('\n}\n\n@media', mobileStart) + 2;
+  const mobileCss = css.slice(mobileStart, mobileEnd);
+  assert.ok(lead >= 0 && lead < steps);
+  assert.match(story, /ba-story-column self-start lg:self-stretch/);
+  assert.match(story, /0\{active \+ 1\}/);
+  assert.doesNotMatch(story, /ba-story-media|Composición visual de B&A\.EC Store/);
+  assert.doesNotMatch(css, /\.ba-story-media/);
+  assert.match(mobileCss, /\.ba-story-lead \{ position: relative; \}/);
+  assert.doesNotMatch(mobileCss, /\.ba-story-lead[^}]*position:\s*sticky/);
+});
+
 test('el menu movil cierra, restaura el body y navega al destino pendiente', () => {
   for (const target of ['#inicio', '#categorias', '#seleccion', '#como-comprar', '#opiniones']) {
     assert.match(navbar, new RegExp(`href: '${target}'`));
