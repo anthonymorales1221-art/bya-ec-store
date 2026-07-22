@@ -8,6 +8,10 @@ const testimonials = readFileSync(new URL('../src/components/Testimonials.jsx', 
 const footer = readFileSync(new URL('../src/components/Footer.jsx', import.meta.url), 'utf8');
 const trustStrip = readFileSync(new URL('../src/components/TrustStrip.jsx', import.meta.url), 'utf8');
 const navbar = readFileSync(new URL('../src/components/Navbar.jsx', import.meta.url), 'utf8');
+const featured = readFileSync(new URL('../src/components/FeaturedProducts.jsx', import.meta.url), 'utf8');
+const mobileMotion = readFileSync(new URL('../src/components/MobileEditorialMotion.jsx', import.meta.url), 'utf8');
+const story = readFileSync(new URL('../src/components/StorySection.jsx', import.meta.url), 'utf8');
+const buying = readFileSync(new URL('../src/components/BuyingJourney.jsx', import.meta.url), 'utf8');
 
 test('categorías móviles forman una unidad en el orden editorial requerido', () => {
   assert.match(css, /\.ba-category-copy \{ display: contents; \}/);
@@ -99,6 +103,30 @@ test('testimonios moviles usan un carrusel tactil editorial continuo', () => {
   assert.match(css, /\.ba-testimonial-card[^}]*scroll-snap-align: start/);
   assert.match(testimonials, /ba-testimonials-progress/);
   assert.match(testimonials, /active=\{index === activeSlide\}/);
+});
+
+test('la gramática editorial móvil está aislada, limpia sus triggers y no oculta contenido por defecto', () => {
+  assert.match(mobileMotion, /max-width: 899px/);
+  assert.match(mobileMotion, /prefers-reduced-motion: no-preference/);
+  assert.match(mobileMotion, /onEnter: \(\) => gsap\.fromTo/);
+  assert.match(mobileMotion, /return \(\) => media\.revert\(\)/);
+  assert.doesNotMatch(mobileMotion, /autoAlpha:\s*0|opacity:\s*0[,}]/);
+});
+
+test('selección destacada móvil usa snap nativo, profundidad e indicador sincronizado', () => {
+  assert.match(featured, /new IntersectionObserver/);
+  assert.match(featured, /root: rail/);
+  assert.match(featured, /ba-featured-mobile-progress/);
+  assert.match(css, /\.ba-featured-scroll \.ba-product-card[^}]*scroll-snap-align: start/);
+  assert.match(css, /\.ba-featured-scroll \.ba-product-card\.is-active[^}]*opacity: 1/);
+});
+
+test('nuestra selección y cómo comprar exponen progreso y estado activo sin pin móvil', () => {
+  assert.match(story, /--story-progress/);
+  assert.match(story, /ba-story-step[^`]*is-active/);
+  assert.match(buying, /--buying-progress/);
+  assert.match(buying, /ba-buying-step[^`]*is-active/);
+  assert.match(css, /\.ba-story-steps::after, \.ba-buying-steps::after/);
 });
 
 test('el menu movil cierra, restaura el body y navega al destino pendiente', () => {

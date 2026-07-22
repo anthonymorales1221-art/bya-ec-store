@@ -302,17 +302,21 @@ export default function Categories() {
       const panels = gsap.utils.toArray('[data-category-panel]', stage);
       let refreshFrame = 0;
 
-      gsap.fromTo(introItems, {
-        y: 22,
-      }, {
-        y: 0,
-        duration: 0.62,
-        stagger: 0.08,
-        ease: 'power3.out',
-        clearProps: 'transform',
+      ScrollTrigger.create({
+        trigger: stage.querySelector('[data-category-intro]'),
+        start: 'top 86%',
+        once: true,
+        onEnter: () => gsap.fromTo(introItems, { y: 22, opacity: 0.55 }, {
+          y: 0,
+          opacity: 1,
+          duration: 0.62,
+          stagger: 0.08,
+          ease: 'power3.out',
+          clearProps: 'transform,opacity',
+        }),
       });
 
-      panels.forEach((panel) => {
+      panels.forEach((panel, index) => {
         const number = panel.querySelector('.ba-category-number');
         const categoryMedia = panel.querySelector('[data-category-media]');
         const copy = panel.querySelector('.ba-category-copy > div');
@@ -329,6 +333,19 @@ export default function Categories() {
           once: true,
           onEnter: () => entrance.play(0),
         });
+        if (index < panels.length - 1) {
+          gsap.to(panel, {
+            scale: 0.985,
+            opacity: 0.72,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: panel,
+              start: 'bottom 68%',
+              end: 'bottom 24%',
+              scrub: 0.55,
+            },
+          });
+        }
       });
 
       const scheduleRefresh = () => {

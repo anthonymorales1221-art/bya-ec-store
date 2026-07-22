@@ -168,21 +168,13 @@ export default function Testimonials() {
     media.add('(max-width: 899px) and (prefers-reduced-motion: no-preference)', () => {
       const headingItems = scene.querySelectorAll('[data-testimonial-heading] > *');
       const cards = gsap.utils.toArray('[data-testimonial-card]', scene);
-      let scrollFrame = 0;
-      const updateActiveSlide = () => {
-        cancelAnimationFrame(scrollFrame);
-        scrollFrame = requestAnimationFrame(() => {
-          if (!rail || cards.length === 0) return;
-          const railLeft = rail.getBoundingClientRect().left;
-          const closest = cards.reduce((best, card, index) => (
-            Math.abs(card.getBoundingClientRect().left - railLeft) < best.distance
-              ? { index, distance: Math.abs(card.getBoundingClientRect().left - railLeft) }
-              : best
-          ), { index: 0, distance: Number.POSITIVE_INFINITY });
-          setActiveSlide(closest.index);
-        });
-      };
-      rail?.addEventListener('scroll', updateActiveSlide, { passive: true });
+      const observer = new IntersectionObserver((entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible) setActiveSlide(cards.indexOf(visible.target));
+      }, { root: rail, threshold: [0.55, 0.72, 0.9] });
+      cards.forEach((card) => observer.observe(card));
       const context = gsap.context(() => {
         gsap.fromTo(headingItems, {
           y: 22,
@@ -206,8 +198,7 @@ export default function Testimonials() {
         });
       }, section);
       return () => {
-        cancelAnimationFrame(scrollFrame);
-        rail?.removeEventListener('scroll', updateActiveSlide);
+        observer.disconnect();
         context.revert();
       };
     });
@@ -218,7 +209,7 @@ export default function Testimonials() {
   if (testimonialsStatus !== 'ready' || selected.length === 0) return null;
   const sceneHeight = selected.length === 4 ? 'ba-testimonials--four' : `ba-testimonials--${selected.length}`;
   return (
-    <section ref={sectionRef} id="opiniones" className={`ba-testimonials ba-dark ${sceneHeight}`} data-cursor-tone="light">
+    <section ref={sectionRef} id="opiniones" className={`ba-testimonials ba-dark ${sceneHeight}`} data-cursor-tone="light" style={{ '--testimonial-active': activeSlide }}>
       <div ref={sceneRef} className="ba-testimonials-scene">
         <div className="ba-testimonials-frame">
           <div className="ba-testimonial-wave" data-testimonial-wave aria-hidden="true" />

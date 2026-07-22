@@ -14,6 +14,7 @@ import ImmersiveCTA from '../components/ImmersiveCTA';
 import PremiumCursor from '../components/PremiumCursor';
 import TitleRevealManager from '../components/TitleRevealManager';
 import ScrollStatement from '../components/ScrollStatement';
+import MobileEditorialMotion from '../components/MobileEditorialMotion';
 import { useScrollAnimationsCleanup } from '../hooks/useScrollAnimations';
 
 export default function Landing() {
@@ -29,6 +30,7 @@ export default function Landing() {
     <div className="relative">
       <PremiumCursor />
       <TitleRevealManager />
+      <MobileEditorialMotion />
       <Hero />
       <TrustStrip />
       <section className="ba-statement-panel px-5 py-20 sm:px-8 sm:py-28 lg:px-10"><div className="mx-auto max-w-[1240px]"><ScrollStatement>Seleccionamos posibilidades, no limitamos categorías.</ScrollStatement></div></section>

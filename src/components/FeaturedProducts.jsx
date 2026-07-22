@@ -13,6 +13,7 @@ gsap.registerPlugin(ScrollTrigger);
 export default function FeaturedProducts() {
   const { products, catalogStatus, contactWhatsAppForHelp } = useCart();
   const [openSku, setOpenSku] = useState(null);
+  const [activeProduct, setActiveProduct] = useState(0);
   const sectionRef = useRef(null);
   const railRef = useRef(null);
   const featured = useMemo(() => {
@@ -69,6 +70,22 @@ export default function FeaturedProducts() {
       context.revert();
     };
   }, [featured.length, catalogStatus]);
+
+  useLayoutEffect(() => {
+    const rail = railRef.current;
+    if (!rail || featured.length === 0 || !window.matchMedia('(max-width: 899px)').matches) return undefined;
+    const cards = [...rail.querySelectorAll('[data-product-card]')];
+    rail.scrollTo({ left: 0, behavior: 'auto' });
+    setActiveProduct(0);
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries
+        .filter((entry) => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (visible) setActiveProduct(cards.indexOf(visible.target));
+    }, { root: rail, threshold: [0.55, 0.72, 0.9] });
+    cards.forEach((card) => observer.observe(card));
+    return () => observer.disconnect();
+  }, [featured.length, catalogStatus]);
   if (catalogStatus === 'error' || (catalogStatus === 'ready' && featured.length === 0)) return null;
 
   const consult = (product) => {
@@ -87,7 +104,7 @@ export default function FeaturedProducts() {
       <div className="mx-auto mt-12 h-px max-w-[1240px] bg-white/10"><span className="ba-featured-progress block h-px bg-[var(--ba-copper-soft)]" /></div>
       <div ref={railRef} className="ba-featured-scroll mt-10 flex snap-x snap-mandatory gap-5 overflow-x-auto px-[max(1.25rem,calc((100vw-1240px)/2+2.5rem))] pb-5 sm:gap-7" data-cursor="ARRASTRAR">
         {(catalogStatus === 'loading' ? Array.from({ length: 4 }) : featured).map((product, index) => product ? (
-          <article key={product.sku} data-product-card data-cursor="VER" className="ba-product-card group w-[82vw] max-w-[390px] shrink-0 snap-center overflow-hidden rounded-[26px] border border-white/10 bg-white/[0.06] transition duration-300 hover:bg-white/[0.09]">
+          <article key={product.sku} data-product-card data-cursor="VER" className={`ba-product-card group w-[82vw] max-w-[390px] shrink-0 snap-center overflow-hidden rounded-[26px] border border-white/10 bg-white/[0.06] transition duration-300 hover:bg-white/[0.09]${activeProduct === index ? ' is-active' : ''}`}>
             <button type="button" onClick={() => setOpenSku(product.sku)} className="block w-full text-left">
               <div className="relative aspect-[4/5] overflow-hidden bg-white/5"><ProductImage absolute src={product.img} alt={product.name} variant="featured" className="h-full w-full" fallbackClassName="font-display text-4xl text-white" /><span className="absolute left-5 top-5 rounded-full bg-[var(--ba-warm-white)] px-3 py-1.5 text-[0.65rem] font-extrabold uppercase tracking-[0.14em] text-[var(--ba-navy)]">0{index + 1}</span></div>
               <div className="p-6"><div className="flex items-center justify-between gap-3"><span className="text-[0.65rem] font-bold uppercase tracking-[0.14em] text-[var(--ba-copper-soft)]">{product.category}</span><span className="text-[0.65rem] font-bold uppercase tracking-[0.12em] text-white/55">Disponible</span></div><h3 className="mt-2 min-h-12 text-lg font-bold leading-6">{product.name}</h3><div className="mt-5 flex items-center justify-between"><span className="font-display text-2xl">{formatPrice(product.price)}</span><span className="text-sm font-bold">Ver producto →</span></div></div>
@@ -96,6 +113,7 @@ export default function FeaturedProducts() {
           </article>
         ) : <div key={index} className="aspect-[4/5] w-[82vw] max-w-[390px] shrink-0 animate-pulse rounded-[26px] bg-white/10" />)}
       </div>
+      {featured.length > 0 && <div className="ba-featured-mobile-progress mx-auto mt-5 max-w-[1240px] px-5 sm:px-8" aria-live="polite"><span>{String(activeProduct + 1).padStart(2, '0')} / {String(featured.length).padStart(2, '0')}</span><i aria-hidden="true"><span style={{ transform: `scaleX(${(activeProduct + 1) / featured.length})` }} /></i></div>}
       {openSku && <ProductModal sku={openSku} onClose={() => setOpenSku(null)} />}
     </section>
   );

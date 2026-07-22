@@ -23,29 +23,23 @@ function EvidenciaCard({ e, index }) {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduced) return;
 
-    gsap.fromTo(
-      el,
-      { opacity: 0, y: 60 },
-      {
-        opacity: 1,
-        y: 0,
-        duration: 0.9,
-        ease: 'expo.out',
-        delay: index * 0.08,
-        scrollTrigger: {
-          trigger: el,
-          start: 'top 90%',
-          toggleActions: 'play none none none',
-          once: true,
-        },
-      }
-    );
+    const context = gsap.context(() => {
+      ScrollTrigger.create({
+        trigger: el,
+        start: 'top 90%',
+        once: true,
+        onEnter: () => gsap.fromTo(el, { opacity: 0.55, y: 28, scale: 0.975 }, {
+          opacity: 1, y: 0, scale: 1, duration: 0.72, ease: 'power3.out', delay: index * 0.06, clearProps: 'transform,opacity',
+        }),
+      });
+    }, el);
+    return () => context.revert();
   }, [index]);
 
   return (
     <article
       ref={cardRef}
-      className="group relative rounded-[26px] overflow-hidden bg-ink border border-ink/40 isolate"
+      className="ba-evidence-card group relative rounded-[26px] overflow-hidden bg-ink border border-ink/40 isolate"
     >
       <div className="grid sm:grid-cols-2">
         {/* Imagen grande */}
@@ -105,7 +99,7 @@ export default function Evidencias() {
   if (evidenciasStatus === 'error') return null;
 
   return (
-    <section className="py-28 sm:py-36 px-6 bg-gradient-to-b from-cream to-cream-deep/30">
+    <section id="evidencias" className="ba-evidence-section py-28 sm:py-36 px-6 bg-gradient-to-b from-cream to-cream-deep/30">
       <div className="max-w-[1180px] mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-14">
           <div className="max-w-xl">
@@ -123,7 +117,7 @@ export default function Evidencias() {
         </div>
 
         {evidenciasStatus === 'loading' && (
-          <div className="grid sm:grid-cols-2 gap-6">
+          <div className="ba-evidence-rail grid sm:grid-cols-2 gap-6">
             {[0, 1, 2, 3].map((i) => (
               <div key={i} className="aspect-[16/10] rounded-[26px] skeleton" />
             ))}
