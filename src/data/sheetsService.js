@@ -25,62 +25,6 @@ export function buildSheetUrl(sheetName, responseHandler = null, gid = '') {
   return url.toString();
 }
 
-export function buildSheetCsvUrl(sheetName, gid = '') {
-  const url = new URL(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export`);
-  url.searchParams.set('format', 'csv');
-  url.searchParams.set('sheet', String(sheetName || '').trim().normalize('NFC'));
-  if (String(gid || '').trim()) url.searchParams.set('gid', String(gid).trim());
-  return url.toString();
-}
-
-export function parseCsvTable(text) {
-  if (typeof text !== 'string') throw new TypeError('La respuesta CSV debe ser texto.');
-  const records = [];
-  let row = [];
-  let value = '';
-  let quoted = false;
-
-  for (let index = 0; index < text.length; index += 1) {
-    const character = text[index];
-    if (character === '"') {
-      if (quoted && text[index + 1] === '"') {
-        value += '"';
-        index += 1;
-      } else {
-        quoted = !quoted;
-      }
-    } else if (character === ',' && !quoted) {
-      row.push(value);
-      value = '';
-    } else if ((character === '\n' || character === '\r') && !quoted) {
-      if (character === '\r' && text[index + 1] === '\n') index += 1;
-      row.push(value);
-      if (row.some((cell) => cell !== '')) records.push(row);
-      row = [];
-      value = '';
-    } else {
-      value += character;
-    }
-  }
-  if (value || row.length > 0) {
-    row.push(value);
-    if (row.some((cell) => cell !== '')) records.push(row);
-  }
-  if (quoted) throw new Error('Respuesta CSV incompleta: comillas sin cerrar.');
-  if (records.length === 0) throw new Error('La exportación CSV no contiene encabezados.');
-
-  const headers = records[0].map((header, index) => (index === 0 ? header.replace(/^\uFEFF/, '') : header));
-  return {
-    status: 'ok',
-    table: {
-      cols: headers.map((label) => ({ label })),
-      rows: records.slice(1).map((cells) => ({
-        c: headers.map((_, index) => ({ v: cells[index] ?? '' })),
-      })),
-    },
-  };
-}
-
 function normalizeHeader(value) {
   return String(value || '')
     .trim()
@@ -117,8 +61,9 @@ function isPublicWebUrl(value) {
 // endpoint soportado de forma confiable para hotlinking de Drive — funciona
 // de forma intermitente o da 403, según el archivo y la cuenta. El endpoint
 // estable y documentado para mostrar una imagen de Drive como <img> público es:
-//   https://drive.google.com/thumbnail?id=FILE_ID&sz=w1000
-// (sz controla el ancho máximo en px; w1000 es de sobra para el catálogo).
+//   https://drive.google.com/thumbnail?id=FILE_ID&sz=w600
+// (sz controla el ancho máximo; w600 mantiene nitidez en tarjetas y evita
+// descargar PNG de más de 1 MB por producto durante la primera carga).
 export function resolveDriveImageUrl(rawUrl) {
   if (!rawUrl) return '';
   const trimmed = rawUrl.trim();
@@ -133,7 +78,7 @@ export function resolveDriveImageUrl(rawUrl) {
     trimmed.match(/[?&]id=([a-zA-Z0-9_-]{10,})/); // .../open?id=FILE_ID
 
   if (match && match[1]) {
-    return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
+    return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w600`;
   }
 
   // No es un link de Drive reconocible (ej. ya es una URL de imagen directa
@@ -440,16 +385,9 @@ async function fetchSheetData(sheetName, gid = '') {
     const text = await res.text();
     return parseGvizResponse(text);
   } catch (error) {
-    if (import.meta.env?.DEV) console.warn('[Google Sheets] GViz directo falló; se intentará CSV.', { sheet: sheetName, requestUrl: url, error: error.message });
-    try {
-      const csvUrl = buildSheetCsvUrl(sheetName, gid);
-      const csvResponse = await fetchWithTimeout(csvUrl, 8000);
-      if (!csvResponse.ok) throw new Error(`HTTP ${csvResponse.status}`);
-      return parseCsvTable(await csvResponse.text());
-    } catch (csvError) {
-      if (import.meta.env?.DEV) console.warn('[Google Sheets] CSV falló; se intentará JSONP.', { sheet: sheetName, error: csvError.message });
-      return fetchSheetJsonp(sheetName, 8000, gid);
-    }
+    if (import.meta.env?.DEV) console.warn('[Google Sheets] Fetch directo falló; se intentará JSONP.', { sheet: sheetName, requestUrl: url, error: error.message });
+    // fetch() normal falló (CORS, red, timeout) — respaldo vía JSONP
+    return fetchSheetJsonp(sheetName, 8000, gid);
   }
 }
 

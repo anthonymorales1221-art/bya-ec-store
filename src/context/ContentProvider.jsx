@@ -1,23 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { fetchCatalogContent, fetchEvidencias, fetchTestimonials } from '../data/sheetsService';
-import { readCatalogCache, writeCatalogCache } from '../services/catalogCache';
 import { ContentContext } from './content-context';
 
-function hasContent(data) {
-  if (Array.isArray(data)) return data.length > 0;
-  return Array.isArray(data?.products) && data.products.length > 0;
-}
-
-function useRemoteCollection(loader, { initialData = [], onSuccess } = {}) {
-  const [data, setData] = useState(initialData);
-  const [status, setStatus] = useState(() => hasContent(initialData) ? 'ready' : 'loading');
+function useRemoteCollection(loader) {
+  const [data, setData] = useState([]);
+  const [status, setStatus] = useState('loading');
   const [error, setError] = useState(null);
   const mountedRef = useRef(true);
-  const dataRef = useRef(data);
-
-  useEffect(() => {
-    dataRef.current = data;
-  }, [data]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -27,7 +16,7 @@ function useRemoteCollection(loader, { initialData = [], onSuccess } = {}) {
   }, []);
 
   const reload = useCallback(async () => {
-    if (mountedRef.current && !hasContent(dataRef.current)) setStatus('loading');
+    if (mountedRef.current) setStatus('loading');
     if (mountedRef.current) setError(null);
     try {
       const list = await loader();
@@ -35,27 +24,22 @@ function useRemoteCollection(loader, { initialData = [], onSuccess } = {}) {
         setData(list);
         setStatus('ready');
       }
-      onSuccess?.(list);
       return list;
     } catch (error) {
       if (import.meta.env.DEV) console.warn('[Contenido] No se pudo cargar una colección remota:', error);
       if (mountedRef.current) {
         setError(error);
-        setStatus(hasContent(dataRef.current) ? 'ready' : 'error');
+        setStatus('error');
       }
       return null;
     }
-  }, [loader, onSuccess]);
+  }, [loader]);
 
   return { data, status, error, reload };
 }
 
 export function ContentProvider({ children }) {
-  const cachedCatalog = useMemo(() => readCatalogCache(), []);
-  const catalog = useRemoteCollection(fetchCatalogContent, {
-    initialData: cachedCatalog || { products: [], categories: [] },
-    onSuccess: writeCatalogCache,
-  });
+  const catalog = useRemoteCollection(fetchCatalogContent);
   const testimonials = useRemoteCollection(fetchTestimonials);
   const evidencias = useRemoteCollection(fetchEvidencias);
   const { reload: reloadCatalog } = catalog;

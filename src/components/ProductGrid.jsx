@@ -4,7 +4,7 @@ import { formatPrice } from '../data/format';
 import { GRID_BATCH_SIZE } from '../data/config';
 import ProductImage from './ProductImage';
 
-function ProductCard({ product, onOpen }) {
+function ProductCard({ product, onOpen, priority = false }) {
   const { cart, addToCart } = useCart();
   const inCart = !!cart[product.sku];
   const outOfStock = product.stock <= 0;
@@ -28,6 +28,8 @@ function ProductCard({ product, onOpen }) {
           src={product.img}
           alt={product.name}
           variant="product"
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : 'auto'}
           className="w-full h-full"
           fallbackClassName="font-display font-semibold text-2xl text-ink-soft"
           fallbackTextClassName=""
@@ -142,8 +144,8 @@ export default function ProductGrid({ activeCategory, searchQuery, onOpenProduct
         <strong className="text-ink">{filtered.length}</strong> producto{filtered.length !== 1 ? 's' : ''}
       </p>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
-        {visible.map((p) => (
-          <ProductCard key={p.sku} product={p} onOpen={onOpenProduct} />
+        {visible.map((p, index) => (
+          <ProductCard key={p.sku} product={p} onOpen={onOpenProduct} priority={index < 4} />
         ))}
       </div>
       {renderedCount < filtered.length && <div ref={sentinelRef} className="h-1" aria-hidden="true" />}
