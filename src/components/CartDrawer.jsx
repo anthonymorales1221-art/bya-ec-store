@@ -116,7 +116,7 @@ function CostBreakdown() {
       {checkoutStep === 'checkout' && (
         <div className="flex justify-between text-ink-soft">
           <span>Envío{selectedMethod ? ` (${selectedMethod.label})` : ''}</span>
-          <span>{selectedMethod ? (selectedMethod.hideCost ? '—' : isVariable ? selectedMethod.costLabel : formatPrice(shippingCost)) : '—'}</span>
+          <span>{selectedMethod ? (isVariable || selectedMethod.isPickup ? selectedMethod.costLabel : formatPrice(shippingCost)) : '—'}</span>
         </div>
       )}
       <div className="flex justify-between font-bold text-base pt-1">
@@ -126,7 +126,7 @@ function CostBreakdown() {
           {isVariable ? '*' : ''}
         </span>
       </div>
-      {isVariable && <p className="text-[0.7rem] text-ink-soft">*Envío {selectedMethod?.hideCost ? 'sujeto a validación' : 'a coordinar directamente por WhatsApp'}</p>}
+      {isVariable && <p className="text-[0.7rem] text-ink-soft">*Costo mínimo informativo; el valor final se coordina por WhatsApp.</p>}
     </div>
   );
 }

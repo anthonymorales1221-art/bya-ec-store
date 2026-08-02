@@ -10,6 +10,18 @@ export const PAYMENT_BANKS = [
 
 export const CASH_PAYMENT = { value: 'efectivo', label: 'Efectivo' };
 
+const ALL_PAYMENT_METHODS = [CASH_PAYMENT, ...PAYMENT_METHODS];
+
+export function getPaymentOptions(method) {
+  return (method?.paymentOptions || [])
+    .map((value) => ALL_PAYMENT_METHODS.find((option) => option.value === value))
+    .filter(Boolean);
+}
+
+export function methodRequiresBank(method, paymentMethod) {
+  return Boolean(method?.bankRequiredFor?.includes(paymentMethod));
+}
+
 export function getPaymentLabel(value) {
   return value === CASH_PAYMENT.value
     ? CASH_PAYMENT.label

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { DELIVERY_METHODS, PICKUP_ADDRESS_PLACEHOLDER } from '../data/deliveryMethods';
-import { CASH_PAYMENT, getBankLabel, getPaymentLabel, PAYMENT_BANKS, PAYMENT_METHODS } from '../data/paymentMethods';
+import { DELIVERY_METHODS } from '../data/deliveryMethods';
+import { getBankLabel, getPaymentLabel, getPaymentOptions, methodRequiresBank, PAYMENT_BANKS } from '../data/paymentMethods';
 import { useCart } from '../hooks/useCart';
 
 export default function CartCheckoutForm() {
   const { selectedDelivery, setSelectedDelivery, selectedMethod, confirmOrder } = useCart();
-  const [form, setForm] = useState({ nombre: '', cedula: '', telefono: '', direccion: '', ciudad: '', paymentMethod: '', bank: '' });
+  const [form, setForm] = useState({ nombre: '', cedula: '', telefono: '', direccion: '', referencia: '', ciudad: '', paymentMethod: '', bank: '' });
   const [errors, setErrors] = useState({});
   const update = (field) => (event) => setForm((current) => ({ ...current, [field]: event.target.value }));
 
@@ -13,12 +13,25 @@ export default function CartCheckoutForm() {
     setForm((current) => ({
       ...current,
       direccion: selectedMethod?.needsAddress ? current.direccion : '',
+      referencia: selectedMethod?.needsReference ? current.referencia : '',
       ciudad: selectedMethod?.needsCity ? current.ciudad : '',
-      paymentMethod: selectedMethod?.isPickup ? CASH_PAYMENT.value : '',
+      paymentMethod: '',
       bank: '',
     }));
-    setErrors((current) => ({ ...current, direccion: false, ciudad: false, paymentMethod: false, bank: false }));
+    setErrors((current) => ({ ...current, direccion: false, referencia: false, ciudad: false, paymentMethod: false, bank: false }));
   }, [selectedMethod]);
+
+  const paymentOptions = getPaymentOptions(selectedMethod);
+  const requiresBank = methodRequiresBank(selectedMethod, form.paymentMethod);
+  const updatePayment = (event) => {
+    const paymentMethod = event.target.value;
+    setForm((current) => ({
+      ...current,
+      paymentMethod,
+      bank: methodRequiresBank(selectedMethod, paymentMethod) ? current.bank : '',
+    }));
+    setErrors((current) => ({ ...current, paymentMethod: false, bank: false }));
+  };
 
   const validate = () => {
     const next = {};
@@ -27,9 +40,10 @@ export default function CartCheckoutForm() {
     if (!form.telefono.trim()) next.telefono = true;
     if (!selectedDelivery) next.delivery = true;
     if (selectedMethod?.needsAddress && !form.direccion.trim()) next.direccion = true;
+    if (selectedMethod?.needsReference && !form.referencia.trim()) next.referencia = true;
     if (selectedMethod?.needsCity && !form.ciudad.trim()) next.ciudad = true;
-    if (selectedMethod && !form.paymentMethod) next.paymentMethod = true;
-    if (selectedMethod && !selectedMethod.isPickup && !form.bank) next.bank = true;
+    if (paymentOptions.length > 0 && !form.paymentMethod) next.paymentMethod = true;
+    if (requiresBank && !form.bank) next.bank = true;
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -86,12 +100,16 @@ export default function CartCheckoutForm() {
 
       {selectedMethod?.isPickup && (
         <p className="text-xs text-ink-soft bg-cream-deep rounded-xl p-3">
-          Te confirmaremos la dirección de retiro por WhatsApp: <strong>{PICKUP_ADDRESS_PLACEHOLDER}</strong>
+          {selectedMethod.checkoutNote}
         </p>
       )}
 
-      {(selectedMethod?.needsAddress || selectedMethod?.needsCity) && (
-        <div className={`grid gap-3 ${selectedMethod.needsAddress && selectedMethod.needsCity ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+      {selectedMethod?.value === 'delivery_ambato' && (
+        <p className="rounded-xl bg-cream-deep p-3 text-xs leading-5 text-ink-soft">{selectedMethod.checkoutNote}</p>
+      )}
+
+      {(selectedMethod?.needsAddress || selectedMethod?.needsCity || selectedMethod?.needsReference) && (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {selectedMethod.needsCity && (
             <div>
             <label htmlFor="checkout-city" className="block text-xs font-bold uppercase tracking-wide text-ink-soft mb-1.5">Ciudad</label>
@@ -100,34 +118,34 @@ export default function CartCheckoutForm() {
           )}
           {selectedMethod.needsAddress && (
             <div>
-              <label htmlFor="checkout-address" className="block text-xs font-bold uppercase tracking-wide text-ink-soft mb-1.5">Dirección de referencia</label>
+              <label htmlFor="checkout-address" className="block text-xs font-bold uppercase tracking-wide text-ink-soft mb-1.5">Dirección</label>
               <input id="checkout-address" name="direccion" autoComplete="street-address" className={inputClass('direccion')} value={form.direccion} onChange={update('direccion')} />
+            </div>
+          )}
+          {selectedMethod.needsReference && (
+            <div className={selectedMethod.needsCity && selectedMethod.needsAddress ? 'sm:col-span-2' : ''}>
+              <label htmlFor="checkout-reference" className="block text-xs font-bold uppercase tracking-wide text-ink-soft mb-1.5">Referencia</label>
+              <input id="checkout-reference" name="referencia" autoComplete="off" placeholder="Ej. cerca de un lugar conocido" className={inputClass('referencia')} value={form.referencia} onChange={update('referencia')} />
             </div>
           )}
         </div>
       )}
 
-      {selectedMethod && (
+      {selectedMethod && paymentOptions.length > 0 && (
         <fieldset className="flex flex-col gap-3">
           <legend className="mb-2 block text-xs font-bold uppercase tracking-wide text-ink-soft">Métodos de pago</legend>
-          {selectedMethod.isPickup ? (
-            <div data-payment-mode="cash" className="flex items-center justify-between rounded-xl border border-dust-deep bg-dust/10 px-4 py-3">
-              <span className="text-sm font-semibold">Efectivo</span>
-              <span className="text-xs font-bold text-ink-soft">Seleccionado automáticamente</span>
-            </div>
-          ) : (
-            <div data-payment-mode="bank" className="contents">
+            <div data-payment-mode={requiresBank ? 'bank' : 'direct'} className="contents">
               <div className="grid grid-cols-2 gap-2">
-                {PAYMENT_METHODS.map((method) => (
+                {paymentOptions.map((method) => (
                   <label key={method.value} className={`cursor-pointer rounded-xl border px-4 py-3 text-center text-sm font-semibold transition-colors ${form.paymentMethod === method.value ? 'border-dust-deep bg-dust/10' : 'border-line bg-white hover:bg-cream-deep'}`}>
-                    <input type="radio" name="paymentMethod" value={method.value} checked={form.paymentMethod === method.value} onChange={update('paymentMethod')} className="sr-only" />
+                    <input type="radio" name="paymentMethod" value={method.value} checked={form.paymentMethod === method.value} onChange={updatePayment} className="sr-only" />
                     {method.label}
                   </label>
                 ))}
               </div>
-              {errors.paymentMethod && <p className="text-xs text-peach-deep">Elige transferencia o depósito.</p>}
+              {errors.paymentMethod && <p className="text-xs text-peach-deep">Elige un método de pago.</p>}
 
-              {form.paymentMethod && <div>
+              {requiresBank && <div>
                 <p className="mb-2 text-xs font-bold uppercase tracking-wide text-ink-soft">Banco</p>
                 <div className="grid grid-cols-2 gap-2">
                   {PAYMENT_BANKS.map((bank) => (
@@ -144,13 +162,13 @@ export default function CartCheckoutForm() {
               </div>}
               <p className="text-xs leading-5 text-ink-soft">Los datos bancarios se compartirán durante la atención por WhatsApp.</p>
             </div>
-          )}
         </fieldset>
       )}
 
       <button
         type="button"
         onClick={() => validate() && confirmOrder(form, {
+          value: form.paymentMethod,
           methodLabel: getPaymentLabel(form.paymentMethod),
           bankLabel: getBankLabel(form.bank),
         })}

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { DELIVERY_METHODS } from '../src/data/deliveryMethods.js';
-import { PAYMENT_BANKS, PAYMENT_METHODS } from '../src/data/paymentMethods.js';
+import { getPaymentOptions, methodRequiresBank, PAYMENT_BANKS, PAYMENT_METHODS } from '../src/data/paymentMethods.js';
 
 const checkout = readFileSync(new URL('../src/components/CartCheckoutForm.jsx', import.meta.url), 'utf8');
 const drawer = readFileSync(new URL('../src/components/CartDrawer.jsx', import.meta.url), 'utf8');
@@ -19,21 +19,28 @@ test('los métodos de entrega son únicos y respetan sus campos y costos', () =>
   assert.equal(cita.label, 'Cooperativa de Transporte Cita Express');
   assert.equal(cita.needsCity, true);
   assert.equal(cita.needsAddress, false);
+  assert.equal(cita.needsReference, false);
   const servientrega = DELIVERY_METHODS.find((method) => method.value === 'servientrega');
-  assert.equal(servientrega.label, 'Servientrega (sujeto a validación)');
+  assert.equal(servientrega.label, 'Servientrega (Min. $5.50)');
+  assert.equal(servientrega.costLabel, 'Min. $5.50');
   assert.equal(servientrega.cost, 0);
-  assert.equal(servientrega.hideCost, true);
+  assert.equal(servientrega.needsReference, true);
+  const delivery = DELIVERY_METHODS.find((method) => method.value === 'delivery_ambato');
+  assert.equal(delivery.costLabel, 'Min. $2.00');
+  assert.deepEqual(getPaymentOptions(delivery).map((option) => option.label), ['Efectivo', 'Transferencia']);
+  assert.equal(methodRequiresBank(delivery, 'efectivo'), false);
+  assert.equal(methodRequiresBank(delivery, 'transferencia'), true);
 });
 
 test('el checkout adapta dirección, ciudad y pagos al método seleccionado', () => {
   assert.match(checkout, /selectedMethod\?\.needsAddress/);
   assert.match(checkout, /selectedMethod\?\.needsCity/);
-  assert.match(checkout, /Dirección de referencia/);
-  assert.match(checkout, /selectedMethod\?\.isPickup \? CASH_PAYMENT\.value/);
-  assert.match(checkout, /Seleccionado automáticamente/);
-  assert.match(checkout, /PAYMENT_METHODS\.map/);
+  assert.match(checkout, />Dirección<\/label>/);
+  assert.match(checkout, />Referencia<\/label>/);
+  assert.match(checkout, /referencia: selectedMethod\?\.needsReference/);
+  assert.match(checkout, /paymentOptions\.map/);
   assert.match(checkout, /PAYMENT_BANKS\.map/);
-  assert.match(checkout, /\{form\.paymentMethod && <div>/);
+  assert.match(checkout, /\{requiresBank && <div>/);
   assert.match(checkout, /direccion: selectedMethod\?\.needsAddress \? current\.direccion : ''/);
   assert.match(checkout, /ciudad: selectedMethod\?\.needsCity \? current\.ciudad : ''/);
   assert.deepEqual(PAYMENT_METHODS.map((method) => method.label), ['Transferencia', 'Depósito']);
@@ -55,10 +62,10 @@ test('el carrito exige confirmación explícita antes de vaciarse', () => {
   assert.match(cartContext, /setCheckoutStep\('cart'\)/);
 });
 
-test('las redes oficiales están disponibles solo en el header de tienda y cierran de forma controlada', () => {
+test('las redes oficiales están disponibles en Inicio y Tienda y cierran de forma controlada', () => {
   assert.match(navbar, /<SocialMenu \/>/);
   assert.match(navbar, /<SocialMenu compact/);
-  assert.equal((navbar.match(/<SocialMenu/g) || []).length, 2);
+  assert.equal((navbar.match(/<SocialMenu/g) || []).length, 4);
   assert.match(social, /facebook\.com\/share\/1968iyEpZv/);
   assert.match(social, /instagram\.com\/bya\.ecstore\?igsh=/);
   assert.match(social, /tiktok\.com\/@ba\.ecstore\?_r=1/);
