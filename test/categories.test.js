@@ -3,6 +3,8 @@ import test from 'node:test';
 import {
   buildSheetUrl,
   gvizRowsToProductCategories,
+  buildSheetCsvUrl,
+  parseCsvTable,
   resolveDriveImageUrl,
 } from '../src/data/sheetsService.js';
 
@@ -107,4 +109,14 @@ test('la URL de catálogo consulta Productos y no la antigua pestaña Categoría
   const url = new URL(buildSheetUrl('Productos'));
   assert.equal(url.searchParams.get('sheet'), 'Productos');
   assert.notEqual(url.searchParams.get('sheet'), 'Categorías');
+});
+
+test('el fallback CSV conserva encabezados, comas y saltos de línea entre comillas', () => {
+  const parsed = parseCsvTable('sku,nombre,descripcion\r\n001,"Producto, uno","Línea 1\nLínea 2"\r\n');
+  assert.deepEqual(parsed.table.cols.map((column) => column.label), ['sku', 'nombre', 'descripcion']);
+  assert.equal(parsed.table.rows[0].c[1].v, 'Producto, uno');
+  assert.equal(parsed.table.rows[0].c[2].v, 'Línea 1\nLínea 2');
+  const csvUrl = new URL(buildSheetCsvUrl('Productos'));
+  assert.equal(csvUrl.searchParams.get('format'), 'csv');
+  assert.equal(csvUrl.searchParams.get('sheet'), 'Productos');
 });

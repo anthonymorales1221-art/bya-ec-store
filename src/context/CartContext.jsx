@@ -83,6 +83,8 @@ export function CartProvider({ children }) {
   }, [mutateCart]);
   const clearCart = useCallback(() => {
     setCart({});
+    setSelectedDelivery(null);
+    setCheckoutStep('cart');
     clearStoredCart();
   }, []);
 
@@ -114,10 +116,10 @@ export function CartProvider({ children }) {
   }, [cartItems.length, cartHasIssues]);
   const goToCartStep = useCallback(() => setCheckoutStep('cart'), []);
 
-  const confirmOrder = useCallback((customer) => {
+  const confirmOrder = useCallback((customer, payment) => {
     if (cartHasIssues) return;
     const message = buildWhatsAppOrderMessage({
-      cartItems: validCartItems, cartSubtotal, shippingCost, method: selectedMethod, customer,
+      cartItems: validCartItems, cartSubtotal, shippingCost, method: selectedMethod, customer, payment,
     });
     if (message) openWhatsApp(WHATSAPP_NUMBER, message);
   }, [validCartItems, cartSubtotal, shippingCost, selectedMethod, cartHasIssues]);

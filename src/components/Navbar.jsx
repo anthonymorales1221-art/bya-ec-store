@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { BRAND } from '../data/config';
 import { useCart } from '../hooks/useCart';
 import ScrollProgress from './ScrollProgress';
+import SocialMenu from './SocialMenu';
 
 function BrandMark({ premium = false }) {
   return (
@@ -38,15 +39,19 @@ function StoreNavbar({ scrolled }) {
         <nav aria-label="Navegación de tienda" className="hidden items-center gap-1 md:flex">
           <Link to="/" className="rounded-full px-5 py-2.5 text-sm font-bold text-ink-soft transition-all hover:bg-cream-deep/70 hover:text-ink">Inicio</Link>
           <Link to="/tienda" aria-current="page" className="rounded-full bg-cream-deep px-5 py-2.5 text-sm font-bold text-ink">Tienda</Link>
+          <SocialMenu />
         </nav>
-        <motion.button type="button" onClick={openCart} whileTap={{ scale: 0.94 }} whileHover={{ scale: 1.02 }} className="relative flex items-center gap-2.5 rounded-full bg-ink px-5 py-2.5 text-sm font-bold text-cream shadow-sm transition-colors hover:bg-[#1c1c1e]">
-          <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill="none" aria-hidden="true">
-            <path d="M3 6h2l2.2 11.2a1 1 0 0 0 1 .8h9.6a1 1 0 0 0 1-.8L21 8H6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="9" cy="21" r="1.4" fill="currentColor" /><circle cx="17" cy="21" r="1.4" fill="currentColor" />
-          </svg>
-          Carrito
-          <AnimatePresence>{cartCount > 0 && <motion.span key={cartCount} initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className="flex h-5 min-w-5 items-center justify-center rounded-full bg-peach-deep px-1.5 text-xs font-extrabold text-ink">{cartCount}</motion.span>}</AnimatePresence>
-        </motion.button>
+        <div className="flex items-center gap-2">
+          <SocialMenu compact className="md:hidden" />
+          <motion.button type="button" onClick={openCart} whileTap={{ scale: 0.94 }} whileHover={{ scale: 1.02 }} aria-label="Abrir carrito" className="relative flex items-center gap-2.5 rounded-full bg-ink px-3 py-2.5 text-sm font-bold text-cream shadow-sm transition-colors hover:bg-[#1c1c1e] sm:px-5">
+            <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill="none" aria-hidden="true">
+              <path d="M3 6h2l2.2 11.2a1 1 0 0 0 1 .8h9.6a1 1 0 0 0 1-.8L21 8H6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="9" cy="21" r="1.4" fill="currentColor" /><circle cx="17" cy="21" r="1.4" fill="currentColor" />
+            </svg>
+            <span className="hidden sm:inline">Carrito</span>
+            <AnimatePresence>{cartCount > 0 && <motion.span key={cartCount} initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className="flex h-5 min-w-5 items-center justify-center rounded-full bg-peach-deep px-1.5 text-xs font-extrabold text-ink">{cartCount}</motion.span>}</AnimatePresence>
+          </motion.button>
+        </div>
       </div>
     </header>
   );

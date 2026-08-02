@@ -5,7 +5,7 @@ const STEPS = [
   { title: 'Explora la tienda', text: 'Revisa categorías, productos, precios y disponibilidad.', label: 'Catálogo disponible' },
   { title: 'Agrega tus productos', text: 'Selecciona cantidades y organiza tu pedido en el carrito.', label: 'Tu selección' },
   { title: 'Confirma por WhatsApp', text: 'El Asistente virtual B&A recibe el detalle del carrito y te guía durante la confirmación.', label: 'Resumen preparado' },
-  { title: 'Paga y recibe', text: 'Realiza una transferencia electrónica o paga en efectivo al retirar. Después coordinamos la entrega seleccionada.', label: 'Pedido coordinado' },
+  { title: 'Paga y recibe', text: 'Elige transferencia o depósito y el banco de tu preferencia. Para retiro en tienda, el pago es en efectivo.', label: 'Pedido coordinado' },
 ];
 
 export default function BuyingJourney() {
@@ -19,7 +19,7 @@ export default function BuyingJourney() {
 
   return (
     <section id="como-comprar" className="ba-buying bg-[var(--ba-warm-white)] px-5 py-24 sm:px-8 sm:py-32 lg:px-10" style={{ '--buying-progress': (active + 1) / STEPS.length }}>
-      <div className="mx-auto max-w-[1240px]"><div className="ba-buying-heading max-w-3xl"><p className="ba-kicker">Paso a paso</p><h2 className="ba-section-title mt-4">Comprar es simple</h2><p className="ba-section-copy mt-5">Explora, elige y confirma tu pedido directamente por WhatsApp.</p></div>
+      <div className="mx-auto max-w-[1240px]"><div className="ba-buying-heading max-w-3xl"><p className="ba-kicker">Paso a paso</p><h2 className="ba-section-title mt-4">Comprar es simple</h2><p className="ba-section-copy mt-5">Explora, elige y confirma tu pedido directamente por WhatsApp. Selecciona tu forma de pago y banco en el carrito; los datos para completar el pago se coordinan de manera privada.</p></div>
         <div className="mt-16 grid gap-14 lg:grid-cols-[0.85fr_1.15fr] lg:gap-24">
           <div className="self-start lg:sticky lg:top-28">
             <div className="mx-auto max-w-[430px] rounded-[36px] border-[8px] border-[var(--ba-navy-deep)] bg-[var(--ba-ivory)] p-4 shadow-[0_28px_70px_rgba(9,24,43,0.14)]">

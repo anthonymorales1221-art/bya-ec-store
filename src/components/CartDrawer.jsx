@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
+import { useState } from 'react';
 import { useCart } from '../hooks/useCart';
 import { formatPrice } from '../data/format';
 import ProductImage from './ProductImage';
@@ -31,7 +32,8 @@ function QtyControl({ sku, qty, onChange }) {
 }
 
 function CartStep() {
-  const { cartItems, changeQty, removeFromCart } = useCart();
+  const { cartItems, changeQty, removeFromCart, clearCart } = useCart();
+  const [confirmingClear, setConfirmingClear] = useState(false);
 
   if (cartItems.length === 0) {
     return (
@@ -84,6 +86,18 @@ function CartStep() {
           </div>
         </div>
       ))}
+      <button type="button" onClick={() => setConfirmingClear(true)} className="mt-2 min-h-11 self-start rounded-full border border-line px-5 text-sm font-bold text-ink-soft transition-colors hover:border-peach-deep hover:text-peach-deep">
+        Vaciar carrito
+      </button>
+      {confirmingClear && (
+        <div className="rounded-2xl border border-line bg-white p-4" role="alertdialog" aria-labelledby="clear-cart-title">
+          <p id="clear-cart-title" className="text-sm font-semibold">¿Deseas eliminar todos los productos del carrito?</p>
+          <div className="mt-4 flex justify-end gap-2">
+            <button type="button" onClick={() => setConfirmingClear(false)} className="min-h-10 rounded-full px-4 text-sm font-bold text-ink-soft hover:bg-cream-deep">Cancelar</button>
+            <button type="button" onClick={() => { clearCart(); setConfirmingClear(false); }} className="min-h-10 rounded-full bg-ink px-4 text-sm font-bold text-cream">Vaciar carrito</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -102,7 +116,7 @@ function CostBreakdown() {
       {checkoutStep === 'checkout' && (
         <div className="flex justify-between text-ink-soft">
           <span>Envío{selectedMethod ? ` (${selectedMethod.label})` : ''}</span>
-          <span>{selectedMethod ? (isVariable ? selectedMethod.costLabel : formatPrice(shippingCost)) : '—'}</span>
+          <span>{selectedMethod ? (selectedMethod.hideCost ? '—' : isVariable ? selectedMethod.costLabel : formatPrice(shippingCost)) : '—'}</span>
         </div>
       )}
       <div className="flex justify-between font-bold text-base pt-1">
@@ -112,7 +126,7 @@ function CostBreakdown() {
           {isVariable ? '*' : ''}
         </span>
       </div>
-      {isVariable && <p className="text-[0.7rem] text-ink-soft">*Envío a coordinar directamente por WhatsApp</p>}
+      {isVariable && <p className="text-[0.7rem] text-ink-soft">*Envío {selectedMethod?.hideCost ? 'sujeto a validación' : 'a coordinar directamente por WhatsApp'}</p>}
     </div>
   );
 }
