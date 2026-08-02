@@ -93,7 +93,7 @@ export default function FeaturedProducts() {
   };
 
   return (
-    <section ref={sectionRef} id="seleccion" className="ba-dark overflow-hidden bg-[var(--ba-navy-deep)] py-24 text-white sm:py-32" data-cursor-tone="light">
+    <section ref={sectionRef} id="destacados" className="ba-dark overflow-hidden bg-[var(--ba-navy-deep)] py-24 text-white sm:py-32" data-cursor-tone="light">
       <div className="mx-auto max-w-[1240px] px-5 sm:px-8 lg:px-10">
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div><p className="ba-kicker text-[var(--ba-copper-soft)]">Curaduría B&A</p><RevealTitle className="mt-4 font-display text-5xl font-medium leading-tight sm:text-6xl">Selección destacada</RevealTitle><p className="mt-5 max-w-xl text-base leading-7 text-white/65">Productos elegidos por su utilidad, diseño y aceptación.</p></div>

@@ -19,7 +19,7 @@ test('selección destacada y tienda reutilizan el mismo ProductModal', () => {
 });
 
 test('la sección destacada conserva sus textos claros fuera del modal', () => {
-  assert.match(featured, /id="seleccion"[^>]*text-white/);
+  assert.match(featured, /id="destacados"[^>]*text-white/);
   assert.match(featured, /text-white\/65/);
 });
 

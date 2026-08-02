@@ -60,7 +60,7 @@ function StoreNavbar({ scrolled }) {
 const LANDING_LINKS = [
   { href: '#inicio', label: 'Inicio' },
   { href: '#categorias', label: 'Categorías' },
-  { href: '#seleccion', label: 'Selección' },
+  { href: '#destacados', label: 'Destacados' },
   { href: '#como-comprar', label: 'Cómo comprar' },
   { href: '#evidencias', label: 'Evidencias' },
 ];

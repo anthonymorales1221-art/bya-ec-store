@@ -158,7 +158,7 @@ test('nuestra selección omite el visual decorativo y conserva progreso, pasos y
 });
 
 test('el menu movil cierra, restaura el body y navega al destino pendiente', () => {
-  for (const target of ['#inicio', '#categorias', '#seleccion', '#como-comprar', '#evidencias']) {
+  for (const target of ['#inicio', '#categorias', '#destacados', '#como-comprar', '#evidencias']) {
     assert.match(navbar, new RegExp(`href: '${target}'`));
   }
   assert.match(navbar, /setPendingTarget\(href\)/);
@@ -173,7 +173,7 @@ test('el menu movil cierra, restaura el body y navega al destino pendiente', () 
 
 test('los destinos comparten offset y categorias no recorta contenido movil', () => {
   assert.match(css, /--ba-header-offset: 84px/);
-  assert.match(css, /#seleccion,/);
+  assert.match(css, /#destacados,/);
   assert.match(css, /scroll-margin-top: var\(--ba-header-offset\)/);
   assert.match(css, /\.ba-categories-stage[^}]*overflow: visible/);
   assert.match(testimonials, /rail\?\.scrollTo\(\{ left: 0, behavior: 'auto' \}\)/);
