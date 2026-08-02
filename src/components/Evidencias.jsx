@@ -54,24 +54,10 @@ function EvidenciaCard({ e, index }) {
           />
         </div>
 
-        {/* Panel oscuro con foto pequeña, nombre, fecha y descripción */}
+        {/* Panel oscuro con nombre, fecha y descripción */}
         <div className="relative flex flex-col p-7 sm:p-8">
-          <div className="relative flex flex-col items-center text-center pt-2 pb-6">
-            <div
-              className="rounded-2xl overflow-hidden ring-4 ring-ink shadow-xl mb-[-1.4rem] relative z-10"
-              style={{ width: 88, height: 88 }}
-            >
-              <ProductImage
-                src={e.fotoPequena || e.fotoGrande}
-                alt={e.nombre}
-                variant="thumbnail"
-                className="w-full h-full"
-                fallbackClassName="font-display font-semibold text-ink-soft text-base"
-                fallbackTextClassName="font-display font-semibold text-ink-soft text-base"
-              />
-            </div>
-            <div className="w-full h-px bg-cream/12 mt-[2.6rem]" />
-            <h3 className="font-display font-semibold text-xl text-cream mt-4 leading-tight">
+          <div className="relative flex flex-col items-center pb-6 pt-2 text-center">
+            <h3 className="font-display font-semibold text-xl text-cream leading-tight">
               {e.nombre}
             </h3>
           </div>

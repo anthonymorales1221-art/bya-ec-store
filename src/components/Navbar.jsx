@@ -9,8 +9,8 @@ import SocialMenu from './SocialMenu';
 function BrandMark({ premium = false }) {
   return (
     <span
-      className={`flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ${
-        premium ? 'ring-1 ring-[var(--ba-copper-soft)]/70' : 'ring-1 ring-line'
+      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ${
+        premium ? 'h-9 w-9 ring-1 ring-[var(--ba-copper-soft)]/70 sm:h-11 sm:w-11' : 'h-11 w-11 ring-1 ring-line'
       }`}
     >
       <img
@@ -121,12 +121,12 @@ function LandingNavbar({ scrolled }) {
   return (
     <header className={`sticky top-0 z-[200] border-b transition-all duration-300 ${scrolled || menuOpen ? 'border-[var(--ba-border)] bg-[var(--ba-warm-white)]/95 shadow-[0_8px_30px_rgba(16,36,62,0.06)] backdrop-blur-xl' : 'border-transparent bg-[var(--ba-ivory)]/80 backdrop-blur-md'}`}>
       <ScrollProgress />
-      <div className={`mx-auto flex max-w-[1240px] items-center justify-between gap-4 px-5 transition-[min-height] duration-300 sm:px-8 lg:px-10 ${scrolled ? 'min-h-16' : 'min-h-[72px]'}`}>
-        <a href="#inicio" className="flex min-w-0 items-center gap-3" onClick={() => setMenuOpen(false)}>
+      <div className={`mx-auto flex w-full max-w-[1240px] items-center justify-between gap-1 px-2.5 transition-[min-height] duration-300 min-[375px]:gap-2 min-[375px]:px-3 sm:gap-4 sm:px-8 lg:px-10 ${scrolled ? 'min-h-16' : 'min-h-[72px]'}`}>
+        <a href="#inicio" className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-3" onClick={() => setMenuOpen(false)}>
           <BrandMark premium />
-            <span className="hidden leading-none sm:block">
-            <span className="block font-display text-lg font-semibold tracking-tight text-[var(--ba-navy-deep)] sm:text-xl">B&A.EC Store</span>
-            <span className="mt-1 block text-[0.58rem] font-bold uppercase tracking-[0.16em] text-[var(--ba-muted)]">Boutique multirrubro</span>
+          <span className="min-w-0 leading-none">
+            <span className="block whitespace-nowrap font-display text-[0.82rem] font-semibold tracking-tight text-[var(--ba-navy-deep)] min-[375px]:text-[0.92rem] sm:text-xl">B&A.EC Store</span>
+            <span className="mt-1 block whitespace-nowrap text-[0.43rem] font-bold uppercase tracking-[0.04em] text-[var(--ba-muted)] min-[375px]:text-[0.48rem] min-[375px]:tracking-[0.07em] sm:text-[0.58rem] sm:tracking-[0.16em]">Boutique multirrubro</span>
           </span>
         </a>
 
@@ -140,7 +140,7 @@ function LandingNavbar({ scrolled }) {
           <button type="button" onClick={contactWhatsAppForHelp} className="inline-flex min-h-11 items-center rounded-full bg-[var(--ba-navy)] px-5 text-sm font-extrabold text-white transition hover:bg-[var(--ba-navy-deep)]">Hablar con un asesor</button>
         </div>
 
-        <div className="flex items-center gap-2 md:hidden">
+        <div className="flex shrink-0 items-center gap-1 min-[375px]:gap-2 md:hidden">
           <SocialMenu compact />
           <button type="button" aria-expanded={menuOpen} aria-controls="landing-mobile-menu" aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'} onClick={() => setMenuOpen((open) => !open)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--ba-border)] bg-[var(--ba-warm-white)] text-[var(--ba-navy)]">
             {menuOpen ? <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg> : <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>}

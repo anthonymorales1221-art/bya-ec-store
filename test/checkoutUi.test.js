@@ -8,6 +8,7 @@ const checkout = readFileSync(new URL('../src/components/CartCheckoutForm.jsx', 
 const drawer = readFileSync(new URL('../src/components/CartDrawer.jsx', import.meta.url), 'utf8');
 const store = readFileSync(new URL('../src/pages/Store.jsx', import.meta.url), 'utf8');
 const navbar = readFileSync(new URL('../src/components/Navbar.jsx', import.meta.url), 'utf8');
+const evidencias = readFileSync(new URL('../src/components/Evidencias.jsx', import.meta.url), 'utf8');
 const social = readFileSync(new URL('../src/components/SocialMenu.jsx', import.meta.url), 'utf8');
 const payments = readFileSync(new URL('../src/components/DeliveryPayments.jsx', import.meta.url), 'utf8');
 const cartContext = readFileSync(new URL('../src/context/CartContext.jsx', import.meta.url), 'utf8');
@@ -78,6 +79,24 @@ test('las redes oficiales están disponibles en Inicio y Tienda y cierran de for
   assert.match(social, /location\.pathname, location\.search, location\.hash/);
   assert.match(social, /onClick=\{\(\) => setOpen\(false\)\}/);
   assert.match(social, /<svg[\s\S]*facebook/);
+});
+
+test('el header móvil conserva la identidad completa junto a compartir y menú', () => {
+  assert.match(navbar, />B&A\.EC Store</);
+  assert.match(navbar, />Boutique multirrubro</);
+  assert.doesNotMatch(navbar, /hidden leading-none sm:block/);
+  assert.match(navbar, /className="flex min-w-0 flex-1 items-center/);
+  assert.match(navbar, /className="flex shrink-0 items-center/);
+});
+
+test('evidencias conserva la imagen principal y no renderiza una miniatura repetida', () => {
+  assert.match(evidencias, /src=\{e\.fotoGrande\}/);
+  assert.match(evidencias, /variant="evidence"/);
+  assert.doesNotMatch(evidencias, /e\.fotoPequena/);
+  assert.doesNotMatch(evidencias, /variant="thumbnail"/);
+  assert.match(evidencias, /\{e\.nombre\}/);
+  assert.match(evidencias, /\{e\.fechaDescripcion\}/);
+  assert.match(evidencias, /\{e\.texto\}/);
 });
 
 test('los logos bancarios conservan proporción y usan marcos uniformes', () => {
