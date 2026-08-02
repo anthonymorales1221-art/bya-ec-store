@@ -22,11 +22,14 @@ test('los métodos de entrega son únicos y respetan sus campos y costos', () =>
   assert.equal(cita.needsAddress, false);
   assert.equal(cita.needsReference, false);
   const servientrega = DELIVERY_METHODS.find((method) => method.value === 'servientrega');
-  assert.equal(servientrega.label, 'Servientrega (Min. $5.50)');
+  assert.equal(servientrega.label, 'Servientrega (Sujeto a Validación)');
+  assert.equal(servientrega.summaryLabel, 'Servientrega');
   assert.equal(servientrega.costLabel, 'Min. $5.50');
   assert.equal(servientrega.cost, 0);
   assert.equal(servientrega.needsReference, true);
   const delivery = DELIVERY_METHODS.find((method) => method.value === 'delivery_ambato');
+  assert.equal(delivery.label, 'Delivery en Ambato (Sujeto a Validación)');
+  assert.equal(delivery.summaryLabel, 'Delivery en Ambato');
   assert.equal(delivery.costLabel, 'Min. $2.00');
   assert.deepEqual(getPaymentOptions(delivery).map((option) => option.label), ['Efectivo', 'Transferencia']);
   assert.equal(methodRequiresBank(delivery, 'efectivo'), false);
@@ -46,6 +49,8 @@ test('el checkout adapta dirección, ciudad y pagos al método seleccionado', ()
   assert.match(checkout, /ciudad: selectedMethod\?\.needsCity \? current\.ciudad : ''/);
   assert.deepEqual(PAYMENT_METHODS.map((method) => method.label), ['Transferencia', 'Depósito']);
   assert.deepEqual(PAYMENT_BANKS.map((bank) => bank.label), ['Banco Pichincha', 'Produbanco']);
+  assert.match(checkout, /grid-cols-\[auto_minmax\(0,1fr\)_auto\]/);
+  assert.match(checkout, /whitespace-nowrap text-right/);
 });
 
 test('la tienda cambia solo la presentación del filtro a un selector', () => {

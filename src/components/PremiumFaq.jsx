@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 const FAQS = [
-  ['¿Realizan envíos a todo Ecuador?', 'Sí. Realizamos envíos nacionales mediante las opciones disponibles en el carrito. También ofrecemos delivery motorizado dentro de Ambato.'],
+  ['¿Realizan envíos a todo Ecuador?', 'Sí. Realizamos envíos nacionales mediante las opciones disponibles en el carrito. También ofrecemos Delivery en Ambato sujeto a validación.'],
   ['¿Qué métodos de pago aceptan?', 'Aceptamos transferencia electrónica. El pago en efectivo está disponible únicamente para retiro personal.'],
   ['¿Cómo funciona la compra por WhatsApp?', 'Después de completar el carrito, el botón “Confirmar pedido por WhatsApp” envía el resumen al Asistente virtual B&A para continuar con la confirmación.'],
   ['¿Cómo elijo la transportadora?', 'Durante el carrito puedes seleccionar la opción de entrega disponible que mejor se adapte a tu pedido.'],

@@ -76,22 +76,20 @@ export default function CartCheckoutForm() {
           {DELIVERY_METHODS.map((method) => (
             <label
               key={method.value}
-              className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 cursor-pointer transition-colors ${
+              className={`grid min-h-12 cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 rounded-xl border px-3 py-3 transition-colors sm:gap-3 sm:px-4 ${
                 selectedDelivery === method.value ? 'border-dust-deep bg-dust/10' : 'border-line hover:bg-cream-deep'
               }`}
             >
-              <span className="flex items-center gap-3">
-                <input
-                  type="radio"
-                  name="deliveryMethod"
-                  value={method.value}
-                  checked={selectedDelivery === method.value}
-                  onChange={() => setSelectedDelivery(method.value)}
-                  className="accent-[var(--color-dust-deep)]"
-                />
-                <span className="text-sm font-medium">{method.label}</span>
-              </span>
-              <span className="text-xs font-bold text-ink-soft">{method.costLabel}</span>
+              <input
+                type="radio"
+                name="deliveryMethod"
+                value={method.value}
+                checked={selectedDelivery === method.value}
+                onChange={() => setSelectedDelivery(method.value)}
+                className="shrink-0 accent-[var(--color-dust-deep)]"
+              />
+              <span className="min-w-0 text-sm font-medium leading-snug">{method.label}</span>
+              <span className="whitespace-nowrap text-right text-xs font-bold text-ink-soft">{method.costLabel}</span>
             </label>
           ))}
         </div>

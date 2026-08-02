@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useReducedMotion } from '../hooks/useLandingMotion';
 
 const ITEMS = [
-  'Envíos a todo Ecuador', 'Delivery motorizado en Ambato', 'Cooperativa de Transporte Cita Express',
-  'Tramaco', 'Servientrega (Min. $5.50)', 'Atención personalizada', 'Transferencia o depósito',
+  'Envíos a todo Ecuador', 'Delivery en Ambato (Sujeto a Validación)', 'Cooperativa de Transporte Cita Express',
+  'Tramaco', 'Servientrega (Sujeto a Validación)', 'Atención personalizada', 'Transferencia o depósito',
   'Efectivo al retirar', 'Compra rápida por WhatsApp',
 ];
 

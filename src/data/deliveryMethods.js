@@ -16,7 +16,8 @@ export const DELIVERY_METHODS = [
   },
   {
     value: 'delivery_ambato',
-    label: 'Delivery en Ambato (motorizado)',
+    label: 'Delivery en Ambato (Sujeto a Validación)',
+    summaryLabel: 'Delivery en Ambato',
     costLabel: 'Min. $2.00',
     cost: 0,
     needsAddress: false,
@@ -53,8 +54,9 @@ export const DELIVERY_METHODS = [
   },
   {
     value: 'servientrega',
-    label: 'Servientrega (Min. $5.50)',
-    whatsappLabel: 'Servientrega',
+    label: 'Servientrega (Sujeto a Validación)',
+    summaryLabel: 'Servientrega',
+    whatsappLabel: 'Servientrega (Sujeto a Validación)',
     costLabel: 'Min. $5.50',
     cost: 0,
     needsAddress: true,

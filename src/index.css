@@ -54,6 +54,7 @@ html {
 #categorias,
 #seleccion,
 #como-comprar,
+#evidencias,
 #opiniones {
   scroll-margin-top: var(--ba-header-offset);
 }

@@ -158,7 +158,7 @@ test('nuestra selección omite el visual decorativo y conserva progreso, pasos y
 });
 
 test('el menu movil cierra, restaura el body y navega al destino pendiente', () => {
-  for (const target of ['#inicio', '#categorias', '#seleccion', '#como-comprar', '#opiniones']) {
+  for (const target of ['#inicio', '#categorias', '#seleccion', '#como-comprar', '#evidencias']) {
     assert.match(navbar, new RegExp(`href: '${target}'`));
   }
   assert.match(navbar, /setPendingTarget\(href\)/);

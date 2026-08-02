@@ -109,19 +109,19 @@ function CostBreakdown() {
 
   return (
     <div className="border-t border-line pt-4 flex flex-col gap-2 text-sm">
-      <div className="flex justify-between text-ink-soft">
-        <span>Subtotal productos</span>
-        <span>{formatPrice(cartSubtotal)}</span>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 text-ink-soft">
+        <span className="min-w-0">Subtotal productos</span>
+        <span className="whitespace-nowrap text-right">{formatPrice(cartSubtotal)}</span>
       </div>
       {checkoutStep === 'checkout' && (
-        <div className="flex justify-between text-ink-soft">
-          <span>Envío{selectedMethod ? ` (${selectedMethod.label})` : ''}</span>
-          <span>{selectedMethod ? (isVariable || selectedMethod.isPickup ? selectedMethod.costLabel : formatPrice(shippingCost)) : '—'}</span>
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 text-ink-soft">
+          <span className="min-w-0">Envío{selectedMethod ? ` (${selectedMethod.summaryLabel || selectedMethod.label})` : ''}</span>
+          <span className="whitespace-nowrap text-right">{selectedMethod ? (isVariable || selectedMethod.isPickup ? selectedMethod.costLabel : formatPrice(shippingCost)) : '—'}</span>
         </div>
       )}
-      <div className="flex justify-between font-bold text-base pt-1">
-        <span>Total</span>
-        <span>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 pt-1 text-base font-bold">
+        <span className="min-w-0">Total</span>
+        <span className="whitespace-nowrap text-right">
           {formatPrice(total)}
           {isVariable ? '*' : ''}
         </span>

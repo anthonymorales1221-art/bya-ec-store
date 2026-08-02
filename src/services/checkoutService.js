@@ -4,6 +4,7 @@ export function buildWhatsAppOrderMessage({ cartItems, cartSubtotal, shippingCos
 
   const total = method.costIsVariable ? cartSubtotal : cartSubtotal + shippingCost;
   const shippingLine = method.costLabel || `$${shippingCost.toFixed(2)}`;
+  const shippingLabel = method.summaryLabel || method.label;
   let message = '¡Hola! 👋 Quiero hacer este pedido en *B&A.Ec Store*:\n\n';
 
   cartItems.forEach((item) => {
@@ -11,7 +12,7 @@ export function buildWhatsAppOrderMessage({ cartItems, cartSubtotal, shippingCos
   });
 
   message += `\n*Subtotal: $${cartSubtotal.toFixed(2)}*\n`;
-  message += `*Envío (${method.label}): ${shippingLine}*\n`;
+  message += `*Envío (${shippingLabel}): ${shippingLine}*\n`;
   message += `*Total: $${total.toFixed(2)}${method.costIsVariable ? ' + envío a coordinar' : ''}*\n\n`;
   message += '— Datos de entrega —\n';
   message += `Nombre: ${customer.nombre}\n`;

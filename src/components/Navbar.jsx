@@ -62,7 +62,7 @@ const LANDING_LINKS = [
   { href: '#categorias', label: 'Categorías' },
   { href: '#seleccion', label: 'Selección' },
   { href: '#como-comprar', label: 'Cómo comprar' },
-  { href: '#opiniones', label: 'Opiniones' },
+  { href: '#evidencias', label: 'Evidencias' },
 ];
 
 function LandingNavbar({ scrolled }) {

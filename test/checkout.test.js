@@ -43,12 +43,13 @@ test('Cita Express incluye solo ciudad, pago y banco', () => {
 
 test('Servientrega informa desde $5.50 sin sumarlo al total', () => {
   const message = build(method('servientrega'), { value: 'transferencia', methodLabel: 'Transferencia', bankLabel: 'Banco Pichincha' });
-  assert.match(message, /Método de entrega: Servientrega/);
+  assert.match(message, /Método de entrega: Servientrega \(Sujeto a Validación\)/);
+  assert.match(message, /Envío \(Servientrega\): Min\. \$5\.50/);
   assert.match(message, /Costo de envío: desde \$5\.50/);
   assert.match(message, /Total: \$10\.00 \+ envío a coordinar/);
   assert.match(message, /Dirección: Centro/);
   assert.match(message, /Referencia: Casa azul/);
-  assert.doesNotMatch(message, /sujeto a validación/i);
+  assert.doesNotMatch(message, /Servientrega \(Min\. \$5\.50\)/);
 });
 
 test('retiro es gratis, no exige pago y descarta todos los datos residuales', () => {
@@ -60,6 +61,8 @@ test('retiro es gratis, no exige pago y descarta todos los datos residuales', ()
 
 test('delivery informa desde $2.00 y efectivo descarta banco y dirección', () => {
   const message = build(method('delivery_ambato'), { value: 'efectivo', methodLabel: 'Efectivo', bankLabel: 'Banco residual' });
+  assert.match(message, /Método de entrega: Delivery en Ambato \(Sujeto a Validación\)/);
+  assert.match(message, /Envío \(Delivery en Ambato\): Min\. \$2\.00/);
   assert.match(message, /Costo de delivery: desde \$2\.00/);
   assert.match(message, /Método de pago: Efectivo/);
   assert.match(message, /El cliente compartirá su ubicación por WhatsApp/);
